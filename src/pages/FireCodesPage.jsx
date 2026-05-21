@@ -138,16 +138,18 @@ const highlight = (text, query) => {
   );
 };
 
+const chapterLabel = (num) => (typeof num === "number" ? `Chapter ${num}` : `Appendix ${num}`);
+const chapterBadge = (num) => (typeof num === "number" ? `${num * 100}` : `Appendix ${num}`);
+
 export default function FireCodesPage() {
   const [search, setSearch] = useState("");
-  const [selectedDoc, setSelectedDoc] = useState({ title: "Table of Contents", label: "2024 IFC", url: CODE_DOCS.toc });
+  const [selectedDoc, setSelectedDoc] = useState({ type: "toc", title: "Table of Contents", label: "2024 IFC", url: CODE_DOCS.toc });
 
   const isSearching = search.trim().length > 0;
   const allChapters = useMemo(
     () => TOC.flatMap((section) => section.chapters.map((chapter) => ({ ...chapter, part: section.part }))),
     []
   );
-  const localChapterDocs = useMemo(() => new Set(Object.keys(CODE_DOCS).filter((key) => /^\d+$/.test(key))), []);
   const sectionsByChapter = useMemo(() => {
     return fireCodeSections.reduce((acc, section) => {
       const key = String(section.chapter);
@@ -161,13 +163,12 @@ export default function FireCodesPage() {
 
   const selectChapter = (chapter) => {
     const chapterSections = sectionsByChapter[String(chapter.num)] || [];
-    const hasLocalPdf = Boolean(chapter.pdfUrl || CODE_DOCS[String(chapter.num)]);
 
-    if (!hasLocalPdf && chapterSections.length > 0) {
+    if (chapterSections.length > 0) {
       setSelectedDoc({
         type: "chapter",
         title: chapter.title,
-        label: typeof chapter.num === "number" ? `Chapter ${chapter.num}` : `Appendix ${chapter.num}`,
+        label: chapterLabel(chapter.num),
         url: getChapterTarget(chapter),
         chapter,
         sections: chapterSections,
@@ -177,21 +178,19 @@ export default function FireCodesPage() {
 
     setSelectedDoc({
       title: chapter.title,
-      label: typeof chapter.num === "number" ? `${chapter.num * 100}` : `Appendix ${chapter.num}`,
+      label: chapterBadge(chapter.num),
       url: getChapterTarget(chapter),
     });
   };
 
-  const selectIndexRef = (entry, ref) => {
-    const chapter = ref.chapter ? allChapters.find((item) => String(item.num) === String(ref.chapter)) : null;
-    if (chapter && localChapterDocs.has(String(chapter.num))) {
-      setSelectedDoc({
-        title: `${entry.title} - ${ref.label}`,
-        label: typeof chapter.num === "number" ? `${chapter.num * 100}` : `Appendix ${chapter.num}`,
-        url: getChapterTarget(chapter),
-      });
+  const selectIndexRef = (ref) => {
+    const matchingSection = fireCodeSections.find((section) => section.section === ref.label);
+    if (matchingSection) {
+      selectCodeSection(matchingSection);
       return;
     }
+
+    const chapter = ref.chapter ? allChapters.find((item) => String(item.num) === String(ref.chapter)) : null;
     if (chapter) {
       selectChapter(chapter);
       return;
@@ -286,11 +285,11 @@ export default function FireCodesPage() {
             </div>
 
             <div className="grid grid-cols-2 gap-3">
-              <button type="button" onClick={() => setSelectedDoc({ title: "Table of Contents", label: "2024 IFC", url: CODE_DOCS.toc })} className="flex items-center gap-3 rounded-xl border border-border/60 bg-card px-4 py-3 text-left shadow-sm transition-colors hover:bg-muted/40">
+              <button type="button" onClick={() => setSelectedDoc({ type: "toc", title: "Table of Contents", label: "2024 IFC", url: CODE_DOCS.toc })} className="flex items-center gap-3 rounded-xl border border-border/60 bg-card px-4 py-3 text-left shadow-sm transition-colors hover:bg-muted/40">
                 <FileText className="h-5 w-5 shrink-0 text-accent" />
                 <span className="text-sm font-heading font-semibold uppercase tracking-wide text-foreground">TOC</span>
               </button>
-              <button type="button" onClick={() => setSelectedDoc({ title: "Index", label: "2024 IFC", url: CODE_DOCS.index })} className="flex items-center gap-3 rounded-xl border border-border/60 bg-card px-4 py-3 text-left shadow-sm transition-colors hover:bg-muted/40">
+              <button type="button" onClick={() => setSelectedDoc({ type: "index", title: "Index", label: "2024 IFC", url: CODE_DOCS.index })} className="flex items-center gap-3 rounded-xl border border-border/60 bg-card px-4 py-3 text-left shadow-sm transition-colors hover:bg-muted/40">
                 <Search className="h-5 w-5 shrink-0 text-accent" />
                 <span className="text-sm font-heading font-semibold uppercase tracking-wide text-foreground">Index</span>
               </button>
@@ -371,7 +370,7 @@ export default function FireCodesPage() {
                         <p className="text-sm font-medium leading-snug text-foreground font-body">{highlight(entry.title, search)}</p>
                         <div className="mt-2 flex flex-wrap gap-2">
                           {entry.refs.map((ref, refIndex) => (
-                            <button key={`${ref.label}-${refIndex}`} type="button" onClick={() => selectIndexRef(entry, ref)} className="rounded-md border border-border bg-background px-2 py-1 text-xs font-semibold text-accent hover:bg-muted">
+                            <button key={`${ref.label}-${refIndex}`} type="button" onClick={() => selectIndexRef(ref)} className="rounded-md border border-border bg-background px-2 py-1 text-xs font-semibold text-accent hover:bg-muted">
                               {ref.label}
                             </button>
                           ))}
@@ -395,10 +394,62 @@ export default function FireCodesPage() {
               </div>
               <a href={selectedDoc.url} target="_blank" rel="noopener noreferrer" className="inline-flex h-9 items-center gap-2 rounded-lg border border-border px-3 text-sm font-medium text-foreground hover:bg-muted">
                 <ExternalLink className="h-4 w-4" />
-                {selectedDoc.type === "code" || selectedDoc.type === "chapter" ? "Open Chapter" : "Open"}
+                {selectedDoc.type === "code" || selectedDoc.type === "chapter" ? "Open Source" : "Open PDF"}
               </a>
             </div>
-            {selectedDoc.type === "code" ? (
+            {selectedDoc.type === "toc" ? (
+              <div className="h-[74vh] overflow-y-auto bg-card px-5 py-5 sm:px-7">
+                <div className="mb-5 rounded-2xl border border-border/60 bg-muted/35 p-4">
+                  <p className="text-xs font-black uppercase tracking-widest text-muted-foreground">2024 IFC</p>
+                  <h3 className="mt-1 font-heading text-2xl font-semibold uppercase tracking-wide text-foreground">Table of Contents</h3>
+                  <p className="mt-2 text-sm text-muted-foreground">Tap any chapter or appendix to open its connected sections.</p>
+                </div>
+                <div className="space-y-4">
+                  {TOC.map((section) => (
+                    <div key={section.part} className="rounded-2xl border border-border/50 bg-background/70">
+                      <div className="border-b border-border/40 px-4 py-3">
+                        <p className="font-heading text-xs font-black uppercase tracking-widest text-muted-foreground">{section.part}</p>
+                      </div>
+                      <div className="divide-y divide-border/30">
+                        {section.chapters.map((chapter) => (
+                          <button key={`${section.part}-${chapter.num}`} type="button" onClick={() => selectChapter(chapter)} className="flex w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-muted/60">
+                            <span className="w-20 shrink-0 rounded-lg bg-slate-950 px-2 py-1 text-center text-xs font-black text-white">
+                              {typeof chapter.num === "number" ? `Ch. ${chapter.num}` : `App. ${chapter.num}`}
+                            </span>
+                            <span className="min-w-0 flex-1">
+                              <span className="block text-sm font-semibold text-foreground">{chapter.title}</span>
+                              <span className="mt-1 block text-xs text-muted-foreground">{chapter.pages}</span>
+                            </span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : selectedDoc.type === "index" ? (
+              <div className="h-[74vh] overflow-y-auto bg-card px-5 py-5 sm:px-7">
+                <div className="mb-5 rounded-2xl border border-border/60 bg-muted/35 p-4">
+                  <p className="text-xs font-black uppercase tracking-widest text-muted-foreground">2024 IFC</p>
+                  <h3 className="mt-1 font-heading text-2xl font-semibold uppercase tracking-wide text-foreground">Index</h3>
+                  <p className="mt-2 text-sm text-muted-foreground">Tap an index reference to open the matching section or chapter.</p>
+                </div>
+                <div className="space-y-3">
+                  {fireCodeIndex.map((entry, entryIndex) => (
+                    <div key={`${entry.title}-${entryIndex}`} className="rounded-xl border border-border/40 bg-background/80 px-4 py-3">
+                      <p className="text-sm font-semibold leading-snug text-foreground">{entry.title}</p>
+                      <div className="mt-2 flex flex-wrap gap-2">
+                        {entry.refs.map((ref, refIndex) => (
+                          <button key={`${entry.title}-${ref.label}-${refIndex}`} type="button" onClick={() => selectIndexRef(ref)} className="rounded-md border border-border bg-card px-2 py-1 text-xs font-semibold text-accent hover:bg-muted">
+                            {ref.label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : selectedDoc.type === "code" ? (
               <div className="h-[74vh] overflow-y-auto bg-card px-5 py-5 sm:px-7">
                 <div className="mb-5 rounded-2xl border border-border/60 bg-muted/35 p-4">
                   <p className="text-xs font-black uppercase tracking-widest text-muted-foreground">
