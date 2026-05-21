@@ -9,24 +9,24 @@
     --font-heading: 'Oswald', sans-serif;
     --font-body: 'Inter', sans-serif;
 
-    --background: 34 14% 91%;
-    --foreground: 220 28% 10%;
-    --card: 0 0% 100%;
+    --background: 30 10% 35%;
+    --foreground: 220 24% 9%;
+    --card: 36 18% 96%;
     --card-foreground: 220 28% 10%;
     --popover: 0 0% 100%;
     --popover-foreground: 220 30% 10%;
     --primary: 220 40% 15%;
     --primary-foreground: 0 0% 98%;
-    --secondary: 32 13% 84%;
+    --secondary: 32 11% 72%;
     --secondary-foreground: 220 28% 10%;
-    --muted: 34 12% 86%;
-    --muted-foreground: 28 8% 42%;
+    --muted: 32 11% 76%;
+    --muted-foreground: 28 8% 34%;
     --accent: 4 80% 52%;
     --accent-foreground: 0 0% 100%;
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 98%;
-    --border: 32 12% 78%;
-    --input: 32 12% 78%;
+    --border: 30 10% 62%;
+    --input: 30 10% 62%;
     --ring: 220 40% 15%;
     --chart-1: 4 80% 52%;
     --chart-2: 220 40% 15%;
@@ -89,8 +89,8 @@
     @apply bg-background text-foreground antialiased;
     min-height: 100vh;
     background:
-      linear-gradient(135deg, hsl(var(--accent) / 0.08), transparent 27rem),
-      linear-gradient(180deg, hsl(36 18% 95%) 0%, hsl(var(--background)) 42%, hsl(32 12% 84%) 100%);
+      linear-gradient(135deg, hsl(var(--accent) / 0.12), transparent 28rem),
+      linear-gradient(180deg, hsl(32 11% 48%) 0%, hsl(var(--background)) 42%, hsl(28 9% 27%) 100%);
     font-family: var(--font-body);
   }
 
@@ -109,8 +109,8 @@
   .app-shell {
     @apply min-h-screen bg-background;
     background-image:
-      linear-gradient(90deg, hsl(28 18% 24% / 0.045) 1px, transparent 1px),
-      linear-gradient(0deg, hsl(28 18% 24% / 0.045) 1px, transparent 1px);
+      linear-gradient(90deg, hsl(30 8% 82% / 0.06) 1px, transparent 1px),
+      linear-gradient(0deg, hsl(30 8% 82% / 0.06) 1px, transparent 1px);
     background-size: 34px 34px;
   }
 
