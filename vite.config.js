@@ -8,6 +8,9 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url))
 // https://vite.dev/config/
 export default defineConfig({
   logLevel: 'error', // Suppress warnings, only show errors
+  preview: {
+    allowedHosts: ['dept-app-k85k.onrender.com'],
+  },
   plugins: [react()],
   resolve: {
     alias: {
