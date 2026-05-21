@@ -54,7 +54,7 @@ export default function EmsProtocolsPage() {
   );
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="app-shell">
       <div className="mx-auto max-w-7xl px-5 py-8">
         <PageHeader
           title="EMS Protocols"
@@ -67,9 +67,9 @@ export default function EmsProtocolsPage() {
             <motion.div
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
-              className="overflow-hidden rounded-2xl border border-border/70 bg-card/95 shadow-sm"
+              className="command-panel overflow-hidden rounded-2xl"
             >
-              <div className="flex items-center gap-4 bg-slate-950 px-5 py-4 text-white">
+              <div className="metal-header flex items-center gap-4 px-5 py-4">
                 <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-accent">
                   <BookOpen className="h-5 w-5" />
                 </div>
@@ -87,7 +87,7 @@ export default function EmsProtocolsPage() {
                 placeholder="Search chest pain, Narcan, SOG 302..."
                 value={search}
                 onChange={(event) => setSearch(event.target.value)}
-                className="h-14 w-full rounded-2xl border border-border/70 bg-card/95 pl-12 pr-12 text-base text-foreground shadow-sm outline-none placeholder:text-muted-foreground focus:ring-2 focus:ring-accent/40"
+                className="h-14 w-full rounded-2xl border border-border/70 bg-card/95 pl-12 pr-12 text-base text-foreground shadow-[0_14px_40px_rgba(15,23,42,0.08)] outline-none placeholder:text-muted-foreground focus:ring-2 focus:ring-accent/40"
               />
               {search && (
                 <button
@@ -111,7 +111,7 @@ export default function EmsProtocolsPage() {
               initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.4 }}
-              className="max-h-[74vh] overflow-y-auto rounded-2xl border border-border/70 bg-card/95 shadow-sm"
+              className="command-panel max-h-[74vh] overflow-y-auto rounded-2xl"
             >
               {filteredSections.length === 0 && (
                 <div className="p-10 text-center text-sm text-muted-foreground font-body">No protocols match your search.</div>
@@ -152,14 +152,14 @@ export default function EmsProtocolsPage() {
             </motion.div>
           </aside>
 
-          <section className="min-h-[78vh] overflow-hidden rounded-2xl border border-border/70 bg-card/95 shadow-sm">
-            <div className="flex flex-wrap items-center gap-3 border-b border-border/60 bg-card px-5 py-4">
-              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-accent/10">
-                <FileText className="h-5 w-5 text-accent" />
+          <section className="command-panel min-h-[78vh] overflow-hidden rounded-2xl">
+            <div className="metal-header flex flex-wrap items-center gap-3 px-5 py-4">
+              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-white/10">
+                <FileText className="h-5 w-5 text-white" />
               </div>
               <div className="min-w-0 flex-1">
-                <p className="text-xs font-black uppercase tracking-wide text-muted-foreground">SOG #{activeProtocol.number}</p>
-                <h2 className="font-heading text-lg font-semibold uppercase tracking-wide text-foreground">
+                <p className="text-xs font-black uppercase tracking-wide text-white/65">SOG #{activeProtocol.number}</p>
+                <h2 className="font-heading text-lg font-semibold uppercase tracking-wide text-white">
                   {activeProtocol.title}
                 </h2>
               </div>

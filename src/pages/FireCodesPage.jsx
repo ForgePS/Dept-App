@@ -204,14 +204,14 @@ export default function FireCodesPage() {
   const totalChapterMatches = filteredSections.reduce((acc, section) => acc + section.chapters.length, 0);
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="app-shell">
       <div className="mx-auto max-w-7xl px-5 py-8">
         <PageHeader title="Fire Codes & Regulations" backTo="/inspection-division" />
 
         <motion.div
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
-          className="mb-4 overflow-hidden rounded-2xl border border-border/60 bg-card shadow-sm"
+          className="command-panel mb-4 overflow-hidden rounded-2xl"
         >
           <div className="flex items-center gap-4 px-5 py-4">
             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-accent">
@@ -259,7 +259,7 @@ export default function FireCodesPage() {
               </p>
             )}
 
-            <div className="max-h-[74vh] overflow-y-auto rounded-2xl border border-border/60 bg-card shadow-sm">
+            <div className="command-panel max-h-[74vh] overflow-y-auto rounded-2xl">
               {filteredSections.length === 0 && filteredIndex.length === 0 && (
                 <div className="p-8 text-center text-sm text-muted-foreground font-body">No matches found.</div>
               )}
@@ -312,7 +312,7 @@ export default function FireCodesPage() {
             </div>
           </aside>
 
-          <section className="min-h-[78vh] overflow-hidden rounded-2xl border border-border/60 bg-card shadow-sm">
+          <section className="command-panel min-h-[78vh] overflow-hidden rounded-2xl">
             <div className="flex flex-wrap items-center gap-3 border-b border-border/60 px-5 py-4">
               <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-accent/10">
                 <FileText className="h-5 w-5 text-accent" />

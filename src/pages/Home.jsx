@@ -1,4 +1,4 @@
-import { Stethoscope, Flame, ClipboardCheck, Search, Phone, ShieldCheck, Radio, Clock3 } from "lucide-react";
+import { Stethoscope, Flame, ClipboardCheck, Search, Phone, ShieldCheck, Clock3, MapPin } from "lucide-react";
 import { motion } from "framer-motion";
 import DashboardCard from "../components/DashboardCard";
 
@@ -47,21 +47,24 @@ export default function Home() {
 
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="app-shell">
       <div className="relative overflow-hidden border-b border-slate-900/20 bg-slate-950 text-white">
-        <div className="absolute inset-0 bg-[linear-gradient(135deg,rgba(220,38,38,0.26),transparent_34%),linear-gradient(90deg,rgba(255,255,255,0.08)_1px,transparent_1px),linear-gradient(0deg,rgba(255,255,255,0.06)_1px,transparent_1px)] bg-[length:auto,48px_48px,48px_48px]" />
-        <div className="relative mx-auto grid max-w-6xl gap-6 px-5 py-8 sm:grid-cols-[auto_1fr] sm:items-center sm:py-10">
+        <div className="absolute inset-0 bg-[linear-gradient(135deg,rgba(220,38,38,0.36),transparent_34%),linear-gradient(90deg,rgba(255,255,255,0.08)_1px,transparent_1px),linear-gradient(0deg,rgba(255,255,255,0.06)_1px,transparent_1px)] bg-[length:auto,44px_44px,44px_44px]" />
+        <div className="absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-red-600/20 to-transparent" />
+        <div className="relative mx-auto grid max-w-6xl gap-7 px-5 py-8 sm:grid-cols-[auto_1fr] sm:items-center sm:py-11">
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.5 }}
           className="mx-auto sm:mx-0">
           
-          <img src="https://media.base44.com/images/public/69f9c7cc9025b4328efe3ba3/55c2ce711_Untitled.png"
+          <div className="relative">
+            <div className="absolute inset-3 rotate-45 rounded-2xl bg-red-600/25 blur-sm" />
+            <img src="/images/horn-lake-logo.png"
 
-          alt="Horn Lake Fire Department Logo"
-          className="h-32 w-32 rounded-3xl bg-white/95 object-contain p-3 shadow-2xl ring-1 ring-white/20 sm:h-40 sm:w-40"
-          style={{ mixBlendMode: 'normal' }} />
+            alt="Horn Lake Fire Department Logo"
+            className="relative h-36 w-36 object-contain drop-shadow-2xl sm:h-48 sm:w-48" />
+          </div>
           
         </motion.div>
         <div className="text-center sm:text-left">
@@ -76,9 +79,16 @@ export default function Home() {
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.2 }}
-          className="mt-2 font-heading text-4xl font-bold uppercase leading-none tracking-wide sm:text-6xl">
+          className="mt-2 font-heading text-5xl font-bold uppercase leading-none tracking-wide sm:text-7xl">
           Horn Lake Fire/EMS
         </motion.h1>
+        <motion.p
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.25 }}
+          className="mx-auto mt-3 max-w-2xl text-base font-medium leading-relaxed text-white/78 sm:mx-0 sm:text-lg">
+          Fast access to department forms, protocols, contacts, fire codes, and field resources from the iPad.
+        </motion.p>
         <motion.div
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
@@ -87,9 +97,9 @@ export default function Home() {
           {[
             { label: "Ready", icon: ShieldCheck },
             { label: "Fast", icon: Clock3 },
-            { label: "Connected", icon: Radio },
+            { label: "Local", icon: MapPin },
           ].map((item) => (
-            <div key={item.label} className="rounded-2xl border border-white/15 bg-white/10 px-3 py-3 backdrop-blur">
+            <div key={item.label} className="rounded-2xl border border-white/15 bg-white/10 px-3 py-3 shadow-lg backdrop-blur">
               <item.icon className="mb-2 h-5 w-5 text-red-300" />
               <p className="text-xs font-bold uppercase tracking-wide text-white/90">{item.label}</p>
             </div>
@@ -100,10 +110,13 @@ export default function Home() {
       </div>
 
       <div className="mx-auto max-w-6xl px-5 py-6 sm:py-8">
-        <div className="mb-4 flex items-end justify-between gap-4">
+        <div className="mb-5 flex items-end justify-between gap-4">
           <div>
             <p className="text-xs font-black uppercase tracking-[0.22em] text-accent">Choose a section</p>
             <h2 className="font-heading text-2xl font-bold uppercase tracking-wide text-foreground">Department tools</h2>
+          </div>
+          <div className="hidden rounded-full border border-border/70 bg-card/80 px-4 py-2 text-xs font-black uppercase tracking-wide text-muted-foreground shadow-sm sm:block">
+            iPad optimized
           </div>
         </div>
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">

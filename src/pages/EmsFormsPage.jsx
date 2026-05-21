@@ -24,15 +24,15 @@ export default function EmsFormsPage() {
   const [activeForm, setActiveForm] = useState(null);
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="max-w-2xl mx-auto px-5 py-8">
-        <PageHeader title="EMS Forms" backTo="/" />
+    <div className="app-shell">
+      <div className="max-w-5xl mx-auto px-5 py-8">
+        <PageHeader title="EMS Forms" subtitle="EMS paperwork, protocols, and quick-reference tools." backTo="/" />
 
         <motion.div
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4, delay: 0.1 }}
-          className="rounded-2xl bg-card border border-border/60 shadow-sm overflow-hidden"
+          className="command-panel overflow-hidden rounded-2xl"
         >
           {!activeForm ? (
             /* Form list */
@@ -41,12 +41,12 @@ export default function EmsFormsPage() {
                 <button
                   key={i}
                   onClick={() => setActiveForm(form)}
-                  className="group w-full flex items-center gap-4 px-6 py-4 border-b border-border/40 hover:bg-muted/50 transition-colors text-left cursor-pointer"
+                  className="group flex min-h-[84px] w-full items-center gap-4 border-b border-border/40 px-6 py-4 text-left transition-colors hover:bg-muted/50"
                 >
-                  <div className="w-9 h-9 rounded-lg bg-accent/10 flex items-center justify-center shrink-0">
-                    <form.icon className="w-4 h-4 text-accent" />
+                  <div className="w-12 h-12 rounded-xl bg-accent/10 flex items-center justify-center shrink-0 group-hover:bg-accent transition-colors">
+                    <form.icon className="w-5 h-5 text-accent transition-colors group-hover:text-white" />
                   </div>
-                  <span className="flex-1 font-body text-sm font-medium text-foreground">{form.label}</span>
+                  <span className="flex-1 font-heading text-lg font-semibold uppercase tracking-wide text-foreground">{form.label}</span>
                   <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-accent group-hover:translate-x-0.5 transition-all" />
                 </button>
               ))}
@@ -54,12 +54,12 @@ export default function EmsFormsPage() {
                 <Link
                   key={i}
                   to={link.to}
-                  className="group w-full flex items-center gap-4 px-6 py-4 border-b border-border/40 last:border-0 hover:bg-muted/50 transition-colors"
+                  className="group flex min-h-[84px] w-full items-center gap-4 border-b border-border/40 px-6 py-4 transition-colors last:border-0 hover:bg-muted/50"
                 >
-                  <div className="w-9 h-9 rounded-lg bg-accent/10 flex items-center justify-center shrink-0">
-                    <link.icon className="w-4 h-4 text-accent" />
+                  <div className="w-12 h-12 rounded-xl bg-accent/10 flex items-center justify-center shrink-0 group-hover:bg-accent transition-colors">
+                    <link.icon className="w-5 h-5 text-accent transition-colors group-hover:text-white" />
                   </div>
-                  <span className="flex-1 font-body text-sm font-medium text-foreground">{link.label}</span>
+                  <span className="flex-1 font-heading text-lg font-semibold uppercase tracking-wide text-foreground">{link.label}</span>
                   <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-accent group-hover:translate-x-0.5 transition-all" />
                 </Link>
               ))}
@@ -67,7 +67,7 @@ export default function EmsFormsPage() {
           ) : (
             /* Embedded form inside the same card */
             <>
-              <div className="px-6 py-4 border-b border-border/60 flex items-center gap-3">
+              <div className="metal-header flex items-center gap-3 px-6 py-4">
                 <button
                   onClick={() => setActiveForm(null)}
                   className="w-7 h-7 rounded-lg flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"

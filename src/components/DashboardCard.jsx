@@ -14,21 +14,23 @@ export default function DashboardCard({ title, description, icon: Icon, to, colo
       
       <Wrapper
         {...wrapperProps}
-        className="group block min-h-[132px] rounded-2xl bg-card/95 border border-border/70 shadow-sm hover:shadow-lg hover:border-accent/30 transition-all duration-300 overflow-hidden focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/50">
+        className="group relative block min-h-[152px] overflow-hidden rounded-2xl border border-border/70 bg-card/95 shadow-[0_14px_40px_rgba(15,23,42,0.08)] transition-all duration-300 hover:-translate-y-1 hover:border-accent/40 hover:shadow-[0_24px_65px_rgba(15,23,42,0.16)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/50">
+        <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-accent via-red-500 to-slate-950" />
+        <div className="absolute -right-12 -top-12 h-28 w-28 rotate-45 border border-slate-900/10 bg-slate-900/[0.03]" />
         
-        <div className="flex h-full items-center gap-5 p-5 sm:p-6">
-          <div className={`${color} shrink-0 w-14 h-14 sm:w-16 sm:h-16 rounded-2xl flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform duration-300`}>
+        <div className="relative flex h-full items-center gap-5 p-5 sm:p-6">
+          <div className={`${color} shrink-0 w-14 h-14 sm:w-16 sm:h-16 rounded-2xl flex items-center justify-center shadow-lg ring-4 ring-slate-950/5 group-hover:scale-105 transition-transform duration-300`}>
             <Icon className="w-7 h-7 sm:w-8 sm:h-8 text-white" strokeWidth={2} />
           </div>
           <div className="flex-1 min-w-0">
-            <h3 className="font-heading text-lg font-semibold text-foreground tracking-wide uppercase">
+            <h3 className="font-heading text-xl font-semibold text-foreground tracking-wide uppercase">
               {title}
             </h3>
             {description &&
             <p className="text-sm sm:text-[15px] text-muted-foreground mt-1 font-body leading-relaxed">{description}</p>
             }
             {to && (
-              <span className="mt-3 inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wide text-accent">
+              <span className="mt-4 inline-flex min-h-9 items-center gap-1.5 rounded-full bg-accent/10 px-3 text-xs font-black uppercase tracking-wide text-accent">
                 {action}
                 <ChevronRight className="w-3.5 h-3.5" />
               </span>

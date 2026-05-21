@@ -19,16 +19,22 @@ export default function PageHeader({ title, subtitle, backTo }) {
           Back
         </Link>
       )}
-      <div className="rounded-2xl border border-border/70 bg-card/80 px-5 py-5 shadow-sm backdrop-blur">
-        <p className="mb-2 text-xs font-black uppercase tracking-[0.22em] text-accent">
-          Horn Lake Fire/EMS
-        </p>
-        <h1 className="font-heading text-3xl md:text-5xl font-bold text-foreground tracking-wide uppercase leading-none">
-          {title}
-        </h1>
-        {subtitle && (
-          <p className="text-muted-foreground font-body mt-2 text-base sm:text-lg leading-relaxed">{subtitle}</p>
-        )}
+      <div className="command-panel relative overflow-hidden rounded-2xl px-5 py-5 sm:px-6">
+        <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-accent via-red-500 to-slate-950" />
+        <div className="flex gap-4">
+          <div className="mt-1 hidden h-14 w-2 rounded-full bg-accent sm:block" />
+          <div className="min-w-0">
+            <p className="mb-2 text-xs font-black uppercase tracking-[0.22em] text-accent">
+              Horn Lake Fire/EMS
+            </p>
+            <h1 className="font-heading text-3xl md:text-5xl font-bold text-foreground tracking-wide uppercase leading-none">
+              {title}
+            </h1>
+            {subtitle && (
+              <p className="text-muted-foreground font-body mt-2 text-base sm:text-lg leading-relaxed">{subtitle}</p>
+            )}
+          </div>
+        </div>
       </div>
     </motion.div>
   );

@@ -34,11 +34,11 @@ export default function FireFormsPage() {
   const pdfUrl = `${sogDocumentUrl}#page=${activeSog.page}`;
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="app-shell">
       <div className="max-w-6xl mx-auto px-5 py-8">
-        <PageHeader title="Fire Forms" backTo="/" />
+        <PageHeader title="Fire Forms" subtitle="Fire forms, SOG access, and department resources." backTo="/" />
 
-        <div className="mb-4 grid grid-cols-2 rounded-xl border border-border/70 bg-card p-1 shadow-sm">
+        <div className="command-panel mb-4 grid grid-cols-2 rounded-2xl p-1.5">
           <button
             type="button"
             onClick={() => {
@@ -47,7 +47,7 @@ export default function FireFormsPage() {
             }}
             className={`flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold transition-colors ${
               activeTab === "forms"
-                ? "bg-primary text-primary-foreground"
+                ? "bg-slate-950 text-white shadow-sm"
                 : "text-muted-foreground hover:bg-muted hover:text-foreground"
             }`}
           >
@@ -62,7 +62,7 @@ export default function FireFormsPage() {
             }}
             className={`flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold transition-colors ${
               activeTab === "sogs"
-                ? "bg-primary text-primary-foreground"
+                ? "bg-slate-950 text-white shadow-sm"
                 : "text-muted-foreground hover:bg-muted hover:text-foreground"
             }`}
           >
@@ -75,7 +75,7 @@ export default function FireFormsPage() {
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4, delay: 0.1 }}
-          className="rounded-2xl bg-card border border-border/60 shadow-sm overflow-hidden"
+          className="command-panel overflow-hidden rounded-2xl"
         >
           {activeTab === "forms" && (
             !activeForm ? (
@@ -83,12 +83,12 @@ export default function FireFormsPage() {
                 <button
                   key={i}
                   onClick={() => setActiveForm(form)}
-                  className="group w-full flex items-center gap-4 px-6 py-4 border-b border-border/40 last:border-0 hover:bg-muted/50 transition-colors text-left"
+                  className="group flex min-h-[84px] w-full items-center gap-4 border-b border-border/40 px-6 py-4 text-left transition-colors last:border-0 hover:bg-muted/50"
                 >
-                  <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-                    <ClipboardList className="w-4 h-4 text-primary" />
+                  <div className="w-12 h-12 rounded-xl bg-accent/10 flex items-center justify-center shrink-0 transition-colors group-hover:bg-accent">
+                    <ClipboardList className="w-5 h-5 text-accent transition-colors group-hover:text-white" />
                   </div>
-                  <span className="flex-1 font-body text-sm font-medium text-foreground">
+                  <span className="flex-1 font-heading text-lg font-semibold uppercase tracking-wide text-foreground">
                     {form.label}
                   </span>
                   <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-accent group-hover:translate-x-0.5 transition-all" />
@@ -96,7 +96,7 @@ export default function FireFormsPage() {
               ))
             ) : (
             <>
-              <div className="px-6 py-4 border-b border-border/60 flex items-center gap-3">
+              <div className="metal-header flex items-center gap-3 px-6 py-4">
                 <button
                   onClick={() => setActiveForm(null)}
                   className="w-7 h-7 rounded-lg flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
@@ -120,7 +120,7 @@ export default function FireFormsPage() {
 
           {activeTab === "sogs" && (
             <div className="grid min-h-[78vh] lg:grid-cols-[360px_1fr]">
-              <aside className="border-b border-border/60 lg:border-b-0 lg:border-r">
+              <aside className="border-b border-border/60 bg-muted/20 lg:border-b-0 lg:border-r">
                 <div className="border-b border-border/60 p-4">
                   <div className="relative">
                     <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -128,7 +128,7 @@ export default function FireFormsPage() {
                       value={searchTerm}
                       onChange={(event) => setSearchTerm(event.target.value)}
                       placeholder="Search SOG number or title"
-                      className="h-11 w-full rounded-lg border border-border bg-background pl-9 pr-3 text-sm outline-none transition-colors placeholder:text-muted-foreground focus:border-primary"
+                      className="h-12 w-full rounded-xl border border-border bg-background pl-9 pr-3 text-sm outline-none transition-colors placeholder:text-muted-foreground focus:border-accent"
                     />
                   </div>
                   <div className="mt-3 flex items-center justify-between text-xs text-muted-foreground">
@@ -153,11 +153,11 @@ export default function FireFormsPage() {
                       onClick={() => setActiveSog(sog)}
                       className={`group flex w-full gap-3 border-b border-border/40 px-4 py-3 text-left transition-colors ${
                         activeSog.code === sog.code
-                          ? "bg-primary/10"
+                        ? "bg-accent/10"
                           : "hover:bg-muted/50"
                       }`}
                     >
-                      <span className="flex h-9 w-12 shrink-0 items-center justify-center rounded-lg bg-muted text-xs font-bold text-foreground">
+                      <span className="flex h-10 w-14 shrink-0 items-center justify-center rounded-xl bg-slate-950 text-xs font-black text-white">
                         {sog.code}
                       </span>
                       <span className="min-w-0 flex-1">
@@ -175,15 +175,15 @@ export default function FireFormsPage() {
               </aside>
 
               <section className="flex min-h-[78vh] flex-col">
-                <div className="flex flex-wrap items-center gap-3 border-b border-border/60 px-5 py-4">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
-                    <FileText className="h-5 w-5 text-primary" />
+                <div className="metal-header flex flex-wrap items-center gap-3 px-5 py-4">
+                  <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-white/10">
+                    <FileText className="h-5 w-5 text-white" />
                   </div>
                   <div className="min-w-0 flex-1">
-                    <p className="text-xs font-bold uppercase tracking-wide text-muted-foreground">
+                    <p className="text-xs font-bold uppercase tracking-wide text-white/65">
                       SOG {activeSog.code}
                     </p>
-                    <h2 className="truncate font-heading text-base font-semibold text-foreground">
+                    <h2 className="truncate font-heading text-base font-semibold text-white">
                       {activeSog.title}
                     </h2>
                   </div>

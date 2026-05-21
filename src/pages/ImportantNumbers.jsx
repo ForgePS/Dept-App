@@ -74,7 +74,7 @@ export default function ImportantNumbers() {
   }, [search]);
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="app-shell">
       <div className="max-w-5xl mx-auto px-5 py-8">
         <PageHeader title="Important Numbers" subtitle="Tap a number to call from the iPad." backTo="/" />
         <div className="relative mb-4">
@@ -83,7 +83,7 @@ export default function ImportantNumbers() {
             value={search}
             onChange={(event) => setSearch(event.target.value)}
             placeholder="Search contacts or numbers"
-            className="h-14 w-full rounded-2xl border border-border/70 bg-card/90 pl-12 pr-12 text-base text-foreground shadow-sm outline-none focus:ring-2 focus:ring-accent/40"
+            className="h-14 w-full rounded-2xl border border-border/70 bg-card/95 pl-12 pr-12 text-base text-foreground shadow-[0_14px_40px_rgba(15,23,42,0.08)] outline-none focus:ring-2 focus:ring-accent/40"
           />
           {search && (
             <button
@@ -104,7 +104,7 @@ export default function ImportantNumbers() {
           {filteredContacts.map((contact, i) => (
             <div
               key={i}
-              className="rounded-2xl border border-border/70 bg-card/95 p-4 shadow-sm transition-colors hover:border-accent/30"
+              className="command-panel rounded-2xl p-4 transition-all hover:-translate-y-0.5 hover:border-accent/40"
             >
               <div className="mb-3 flex items-center gap-3">
                 <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-accent/10">

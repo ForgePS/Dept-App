@@ -1,45 +1,47 @@
 import { useState } from "react";
-import PageHeader from "../components/PageHeader";
+import { ArrowLeft, ClipboardCheck } from "lucide-react";
 import { motion } from "framer-motion";
-import { ClipboardCheck, ArrowLeft } from "lucide-react";
+import PageHeader from "../components/PageHeader";
 
 export default function FireInspectionFormPage() {
   const [open, setOpen] = useState(false);
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="max-w-2xl mx-auto px-5 py-8">
-        <PageHeader title="Fire Inspection Form" backTo="/inspection-division" />
+    <div className="app-shell">
+      <div className="mx-auto max-w-5xl px-5 py-8">
+        <PageHeader title="Fire Inspection Form" subtitle="Open the inspection form without leaving the app." backTo="/inspection-division" />
 
         <motion.div
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4, delay: 0.1 }}
-          className="rounded-2xl bg-card border border-border/60 shadow-sm overflow-hidden"
+          className="command-panel overflow-hidden rounded-2xl"
         >
           {!open ? (
             <button
               onClick={() => setOpen(true)}
-              className="group w-full flex items-center gap-4 px-6 py-4 hover:bg-muted/50 transition-colors text-left"
+              className="group flex min-h-[84px] w-full items-center gap-4 px-6 py-4 text-left transition-colors hover:bg-muted/50"
             >
-              <div className="w-9 h-9 rounded-lg bg-accent/10 flex items-center justify-center shrink-0">
-                <ClipboardCheck className="w-4 h-4 text-accent" />
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-accent/10 transition-colors group-hover:bg-accent">
+                <ClipboardCheck className="h-5 w-5 text-accent transition-colors group-hover:text-white" />
               </div>
-              <span className="flex-1 font-body text-sm font-medium text-foreground">
+              <span className="flex-1 font-heading text-lg font-semibold uppercase tracking-wide text-foreground">
                 Fire Inspection Form
               </span>
-              <span className="text-xs text-accent font-medium">Open â</span>
+              <span className="rounded-full bg-accent/10 px-3 py-2 text-xs font-black uppercase tracking-wide text-accent">
+                Open
+              </span>
             </button>
           ) : (
             <>
-              <div className="px-6 py-4 border-b border-border/60 flex items-center gap-3">
+              <div className="metal-header flex items-center gap-3 px-6 py-4">
                 <button
                   onClick={() => setOpen(false)}
-                  className="w-7 h-7 rounded-lg flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+                  className="flex h-9 w-9 items-center justify-center rounded-lg text-white/75 transition-colors hover:bg-white/10 hover:text-white"
                 >
-                  <ArrowLeft className="w-4 h-4" />
+                  <ArrowLeft className="h-4 w-4" />
                 </button>
-                <h2 className="font-heading text-base font-semibold text-foreground tracking-wide uppercase">
+                <h2 className="font-heading text-base font-semibold uppercase tracking-wide text-white">
                   Fire Inspection Form
                 </h2>
               </div>
