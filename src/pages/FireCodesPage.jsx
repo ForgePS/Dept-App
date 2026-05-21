@@ -3,6 +3,7 @@ import PageHeader from "../components/PageHeader";
 import { motion } from "framer-motion";
 import { BookOpen, ExternalLink, FileText, Search, X } from "lucide-react";
 import { fireCodeIndex } from "../data/fireCodeIndex";
+import { fireCodeSections } from "../data/fireCodeSections";
 
 const BASE_URL = "https://up.codes/viewer/international/ifc-2024";
 
@@ -175,6 +176,17 @@ export default function FireCodesPage() {
     setSelectedDoc({ title: "Index", label: ref.label, url: CODE_DOCS.index });
   };
 
+  const selectCodeSection = (section) => {
+    const chapter = allChapters.find((item) => String(item.num) === String(section.chapter));
+    setSelectedDoc({
+      type: "code",
+      title: `${section.section} ${section.title}`,
+      label: `Chapter ${section.chapter}`,
+      url: chapter ? getChapterTarget(chapter) : BASE_URL,
+      section,
+    });
+  };
+
   const filteredSections = useMemo(() => {
     if (!isSearching) return TOC;
     const q = search.toLowerCase();
@@ -199,6 +211,14 @@ export default function FireCodesPage() {
         entry.refs.some((ref) => ref.label.toLowerCase().includes(q) || String(ref.chapter || "").includes(q))
       )
       .slice(0, 60);
+  }, [search, isSearching]);
+
+  const filteredCodeSections = useMemo(() => {
+    if (!isSearching) return [];
+    const q = search.toLowerCase();
+    return fireCodeSections
+      .filter((section) => section.searchText.includes(q))
+      .slice(0, 80);
   }, [search, isSearching]);
 
   const totalChapterMatches = filteredSections.reduce((acc, section) => acc + section.chapters.length, 0);
@@ -255,12 +275,12 @@ export default function FireCodesPage() {
 
             {isSearching && (
               <p className="text-xs text-muted-foreground font-body">
-                {totalChapterMatches} chapter result{totalChapterMatches !== 1 ? "s" : ""} - {filteredIndex.length} index result{filteredIndex.length !== 1 ? "s" : ""}
+                {totalChapterMatches} chapter result{totalChapterMatches !== 1 ? "s" : ""} - {filteredCodeSections.length} code section result{filteredCodeSections.length !== 1 ? "s" : ""} - {filteredIndex.length} index result{filteredIndex.length !== 1 ? "s" : ""}
               </p>
             )}
 
             <div className="command-panel max-h-[74vh] overflow-y-auto rounded-2xl">
-              {filteredSections.length === 0 && filteredIndex.length === 0 && (
+              {filteredSections.length === 0 && filteredCodeSections.length === 0 && filteredIndex.length === 0 && (
                 <div className="p-8 text-center text-sm text-muted-foreground font-body">No matches found.</div>
               )}
 
@@ -287,6 +307,35 @@ export default function FireCodesPage() {
                   </div>
                 </div>
               ))}
+
+              {filteredCodeSections.length > 0 && (
+                <div>
+                  <div className="border-b border-border/40 bg-muted/40 px-4 py-3">
+                    <p className="font-heading text-xs font-semibold uppercase tracking-widest text-muted-foreground">Code Section Matches</p>
+                  </div>
+                  <div className="divide-y divide-border/30">
+                    {filteredCodeSections.map((section) => (
+                      <button
+                        key={section.section}
+                        type="button"
+                        onClick={() => selectCodeSection(section)}
+                        className="group flex w-full gap-3 px-4 py-3 text-left transition-colors hover:bg-muted/40"
+                      >
+                        <span className="mt-0.5 w-20 shrink-0 rounded-lg bg-slate-950 px-2 py-1 text-center text-xs font-black text-white">
+                          {section.section}
+                        </span>
+                        <span className="min-w-0 flex-1">
+                          <span className="block text-sm font-semibold leading-snug text-foreground">{highlight(section.title, search)}</span>
+                          <span className="mt-1 block text-xs text-muted-foreground">
+                            Chapter {section.chapter} - {section.chapterTitle}
+                          </span>
+                        </span>
+                        <ExternalLink className="mt-1 h-3.5 w-3.5 shrink-0 text-muted-foreground transition-colors group-hover:text-accent" />
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               {filteredIndex.length > 0 && (
                 <div>
@@ -323,10 +372,31 @@ export default function FireCodesPage() {
               </div>
               <a href={selectedDoc.url} target="_blank" rel="noopener noreferrer" className="inline-flex h-9 items-center gap-2 rounded-lg border border-border px-3 text-sm font-medium text-foreground hover:bg-muted">
                 <ExternalLink className="h-4 w-4" />
-                Open
+                {selectedDoc.type === "code" ? "Open Chapter" : "Open"}
               </a>
             </div>
-            <iframe key={selectedDoc.url} src={selectedDoc.url} title={selectedDoc.title} className="h-[74vh] w-full bg-muted" style={{ border: "none" }} />
+            {selectedDoc.type === "code" ? (
+              <div className="h-[74vh] overflow-y-auto bg-card px-5 py-5 sm:px-7">
+                <div className="mb-5 rounded-2xl border border-border/60 bg-muted/35 p-4">
+                  <p className="text-xs font-black uppercase tracking-widest text-muted-foreground">
+                    Chapter {selectedDoc.section.chapter}
+                  </p>
+                  <h3 className="mt-1 font-heading text-2xl font-semibold uppercase tracking-wide text-foreground">
+                    {selectedDoc.section.section} {selectedDoc.section.title}
+                  </h3>
+                  <p className="mt-2 text-sm text-muted-foreground">{selectedDoc.section.chapterTitle}</p>
+                </div>
+                <div className="space-y-3">
+                  {selectedDoc.section.body.map((line, index) => (
+                    <p key={`${selectedDoc.section.section}-${index}`} className="rounded-xl border border-border/40 bg-background/80 px-4 py-3 text-sm leading-6 text-foreground">
+                      {highlight(line, search)}
+                    </p>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <iframe key={selectedDoc.url} src={selectedDoc.url} title={selectedDoc.title} className="h-[74vh] w-full bg-muted" style={{ border: "none" }} />
+            )}
           </section>
         </div>
       </div>
