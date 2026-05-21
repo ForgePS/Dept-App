@@ -1,7 +1,8 @@
 import { useState } from "react";
 import PageHeader from "../components/PageHeader";
 import { motion } from "framer-motion";
-import { ClipboardList, ChevronRight, ArrowLeft } from "lucide-react";
+import { ArrowLeft, BookOpen, ChevronRight, ClipboardList, ExternalLink, FileText, Search } from "lucide-react";
+import { sogDocumentUrl, sogs } from "../data/sogs";
 
 const forms = [
   {
@@ -16,11 +17,59 @@ const forms = [
 
 export default function FireFormsPage() {
   const [activeForm, setActiveForm] = useState(null);
+  const [activeTab, setActiveTab] = useState("forms");
+  const [searchTerm, setSearchTerm] = useState("");
+  const [activeSog, setActiveSog] = useState(sogs[0]);
+
+  const filteredSogs = sogs.filter((sog) => {
+    const value = searchTerm.trim().toLowerCase();
+    return (
+      !value ||
+      sog.code.toLowerCase().includes(value) ||
+      sog.title.toLowerCase().includes(value) ||
+      `sog ${sog.code}`.includes(value)
+    );
+  });
+
+  const pdfUrl = `${sogDocumentUrl}#page=${activeSog.page}`;
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="max-w-2xl mx-auto px-5 py-8">
+      <div className="max-w-6xl mx-auto px-5 py-8">
         <PageHeader title="Fire Forms" backTo="/" />
+
+        <div className="mb-4 grid grid-cols-2 rounded-xl border border-border/70 bg-card p-1 shadow-sm">
+          <button
+            type="button"
+            onClick={() => {
+              setActiveTab("forms");
+              setActiveForm(null);
+            }}
+            className={`flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold transition-colors ${
+              activeTab === "forms"
+                ? "bg-primary text-primary-foreground"
+                : "text-muted-foreground hover:bg-muted hover:text-foreground"
+            }`}
+          >
+            <ClipboardList className="h-4 w-4" />
+            Forms
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setActiveTab("sogs");
+              setActiveForm(null);
+            }}
+            className={`flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold transition-colors ${
+              activeTab === "sogs"
+                ? "bg-primary text-primary-foreground"
+                : "text-muted-foreground hover:bg-muted hover:text-foreground"
+            }`}
+          >
+            <BookOpen className="h-4 w-4" />
+            SOGs
+          </button>
+        </div>
 
         <motion.div
           initial={{ opacity: 0, y: 16 }}
@@ -28,23 +77,24 @@ export default function FireFormsPage() {
           transition={{ duration: 0.4, delay: 0.1 }}
           className="rounded-2xl bg-card border border-border/60 shadow-sm overflow-hidden"
         >
-          {!activeForm ? (
-            forms.map((form, i) => (
-              <button
-                key={i}
-                onClick={() => setActiveForm(form)}
-                className="group w-full flex items-center gap-4 px-6 py-4 border-b border-border/40 last:border-0 hover:bg-muted/50 transition-colors text-left"
-              >
-                <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-                  <ClipboardList className="w-4 h-4 text-primary" />
-                </div>
-                <span className="flex-1 font-body text-sm font-medium text-foreground">
-                  {form.label}
-                </span>
-                <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-accent group-hover:translate-x-0.5 transition-all" />
-              </button>
-            ))
-          ) : (
+          {activeTab === "forms" && (
+            !activeForm ? (
+              forms.map((form, i) => (
+                <button
+                  key={i}
+                  onClick={() => setActiveForm(form)}
+                  className="group w-full flex items-center gap-4 px-6 py-4 border-b border-border/40 last:border-0 hover:bg-muted/50 transition-colors text-left"
+                >
+                  <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                    <ClipboardList className="w-4 h-4 text-primary" />
+                  </div>
+                  <span className="flex-1 font-body text-sm font-medium text-foreground">
+                    {form.label}
+                  </span>
+                  <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-accent group-hover:translate-x-0.5 transition-all" />
+                </button>
+              ))
+            ) : (
             <>
               <div className="px-6 py-4 border-b border-border/60 flex items-center gap-3">
                 <button
@@ -65,6 +115,97 @@ export default function FireFormsPage() {
                 allowFullScreen
               />
             </>
+            )
+          )}
+
+          {activeTab === "sogs" && (
+            <div className="grid min-h-[78vh] lg:grid-cols-[360px_1fr]">
+              <aside className="border-b border-border/60 lg:border-b-0 lg:border-r">
+                <div className="border-b border-border/60 p-4">
+                  <div className="relative">
+                    <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                    <input
+                      value={searchTerm}
+                      onChange={(event) => setSearchTerm(event.target.value)}
+                      placeholder="Search SOG number or title"
+                      className="h-11 w-full rounded-lg border border-border bg-background pl-9 pr-3 text-sm outline-none transition-colors placeholder:text-muted-foreground focus:border-primary"
+                    />
+                  </div>
+                  <div className="mt-3 flex items-center justify-between text-xs text-muted-foreground">
+                    <span>{filteredSogs.length} SOGs</span>
+                    <a
+                      href={sogDocumentUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex items-center gap-1 font-medium text-primary hover:underline"
+                    >
+                      Open PDF
+                      <ExternalLink className="h-3.5 w-3.5" />
+                    </a>
+                  </div>
+                </div>
+
+                <div className="max-h-[62vh] overflow-y-auto">
+                  {filteredSogs.map((sog) => (
+                    <button
+                      key={sog.code}
+                      type="button"
+                      onClick={() => setActiveSog(sog)}
+                      className={`group flex w-full gap-3 border-b border-border/40 px-4 py-3 text-left transition-colors ${
+                        activeSog.code === sog.code
+                          ? "bg-primary/10"
+                          : "hover:bg-muted/50"
+                      }`}
+                    >
+                      <span className="flex h-9 w-12 shrink-0 items-center justify-center rounded-lg bg-muted text-xs font-bold text-foreground">
+                        {sog.code}
+                      </span>
+                      <span className="min-w-0 flex-1">
+                        <span className="block text-sm font-semibold text-foreground">
+                          {sog.title}
+                        </span>
+                        <span className="mt-1 block text-xs text-muted-foreground">
+                          Page {sog.page}
+                        </span>
+                      </span>
+                      <ChevronRight className="mt-2 h-4 w-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
+                    </button>
+                  ))}
+                </div>
+              </aside>
+
+              <section className="flex min-h-[78vh] flex-col">
+                <div className="flex flex-wrap items-center gap-3 border-b border-border/60 px-5 py-4">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
+                    <FileText className="h-5 w-5 text-primary" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-xs font-bold uppercase tracking-wide text-muted-foreground">
+                      SOG {activeSog.code}
+                    </p>
+                    <h2 className="truncate font-heading text-base font-semibold text-foreground">
+                      {activeSog.title}
+                    </h2>
+                  </div>
+                  <a
+                    href={pdfUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex h-9 items-center gap-2 rounded-lg border border-border px-3 text-sm font-medium text-foreground hover:bg-muted"
+                  >
+                    <ExternalLink className="h-4 w-4" />
+                    Open
+                  </a>
+                </div>
+                <iframe
+                  key={pdfUrl}
+                  src={pdfUrl}
+                  title={`SOG ${activeSog.code} - ${activeSog.title}`}
+                  className="min-h-[68vh] w-full flex-1 bg-muted"
+                  style={{ border: "none" }}
+                />
+              </section>
+            </div>
           )}
         </motion.div>
       </div>
