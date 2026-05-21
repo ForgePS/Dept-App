@@ -131,19 +131,19 @@ export default function EmsProtocolsPage() {
                         type="button"
                         onClick={() => setActiveProtocol(protocol)}
                         className={`group flex min-h-[76px] w-full items-center gap-3 px-4 py-3 text-left transition-colors ${
-                          activeProtocol.number === protocol.number ? "bg-accent/10" : "hover:bg-muted/40"
+                          activeProtocol.number === protocol.number ? "bg-accent/15" : "bg-card hover:bg-muted/40"
                         }`}
                       >
-                        <span className="flex h-12 w-20 shrink-0 items-center justify-center rounded-xl bg-slate-950 text-xs font-black text-white">
+                        <span className="flex h-12 w-20 shrink-0 items-center justify-center rounded-xl bg-accent text-xs font-black text-white shadow-sm">
                           SOG #{protocol.number}
                         </span>
                         <span className="min-w-0 flex-1">
-                          <span className="block text-sm font-semibold leading-snug text-foreground">
+                          <span className="block text-sm font-black leading-snug text-foreground">
                             {highlight(protocol.title, search)}
                           </span>
-                          <span className="mt-1 block text-xs text-muted-foreground">{protocol.category}</span>
+                          <span className="mt-1 block text-xs font-semibold text-slate-700">{protocol.category}</span>
                         </span>
-                        <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5 group-hover:text-accent" />
+                        <ChevronRight className="h-4 w-4 shrink-0 text-accent transition-transform group-hover:translate-x-0.5" />
                       </button>
                     ))}
                   </div>

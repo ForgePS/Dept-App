@@ -83,15 +83,15 @@ export default function FireFormsPage() {
                 <button
                   key={i}
                   onClick={() => setActiveForm(form)}
-                  className="group flex min-h-[84px] w-full items-center gap-4 border-b border-border/40 px-6 py-4 text-left transition-colors last:border-0 hover:bg-muted/50"
+                  className="group flex min-h-[84px] w-full items-center gap-4 border-b border-border/50 bg-card px-6 py-4 text-left transition-colors last:border-0 hover:bg-muted/50"
                 >
-                  <div className="w-12 h-12 rounded-xl bg-accent/10 flex items-center justify-center shrink-0 transition-colors group-hover:bg-accent">
-                    <ClipboardList className="w-5 h-5 text-accent transition-colors group-hover:text-white" />
+                  <div className="w-12 h-12 rounded-xl bg-accent flex items-center justify-center shrink-0 shadow-sm transition-colors">
+                    <ClipboardList className="w-5 h-5 text-white" />
                   </div>
                   <span className="flex-1 font-heading text-lg font-semibold uppercase tracking-wide text-foreground">
                     {form.label}
                   </span>
-                  <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-accent group-hover:translate-x-0.5 transition-all" />
+                  <ChevronRight className="w-4 h-4 text-accent group-hover:translate-x-0.5 transition-all" />
                 </button>
               ))
             ) : (
@@ -151,24 +151,24 @@ export default function FireFormsPage() {
                       key={sog.code}
                       type="button"
                       onClick={() => setActiveSog(sog)}
-                      className={`group flex w-full gap-3 border-b border-border/40 px-4 py-3 text-left transition-colors ${
+                      className={`group flex w-full gap-3 border-b border-border/50 px-4 py-3 text-left transition-colors ${
                         activeSog.code === sog.code
-                        ? "bg-accent/10"
-                          : "hover:bg-muted/50"
+                        ? "bg-accent/15"
+                          : "bg-card hover:bg-muted/50"
                       }`}
                     >
-                      <span className="flex h-10 w-14 shrink-0 items-center justify-center rounded-xl bg-slate-950 text-xs font-black text-white">
+                      <span className="flex h-10 w-14 shrink-0 items-center justify-center rounded-xl bg-accent text-xs font-black text-white shadow-sm">
                         {sog.code}
                       </span>
                       <span className="min-w-0 flex-1">
-                        <span className="block text-sm font-semibold text-foreground">
+                        <span className="block text-sm font-black text-foreground">
                           {sog.title}
                         </span>
-                        <span className="mt-1 block text-xs text-muted-foreground">
+                        <span className="mt-1 block text-xs font-semibold text-slate-700">
                           Page {sog.page}
                         </span>
                       </span>
-                      <ChevronRight className="mt-2 h-4 w-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
+                      <ChevronRight className="mt-2 h-4 w-4 shrink-0 text-accent transition-transform group-hover:translate-x-0.5" />
                     </button>
                   ))}
                 </div>
