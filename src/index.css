@@ -9,30 +9,30 @@
     --font-heading: 'Oswald', sans-serif;
     --font-body: 'Inter', sans-serif;
 
-    --background: 30 10% 35%;
-    --foreground: 220 24% 9%;
-    --card: 36 18% 96%;
-    --card-foreground: 220 28% 10%;
+    --background: 216 10% 18%;
+    --foreground: 220 18% 8%;
+    --card: 210 13% 93%;
+    --card-foreground: 220 18% 8%;
     --popover: 0 0% 100%;
     --popover-foreground: 220 30% 10%;
-    --primary: 220 40% 15%;
+    --primary: 220 22% 10%;
     --primary-foreground: 0 0% 98%;
-    --secondary: 32 11% 72%;
-    --secondary-foreground: 220 28% 10%;
-    --muted: 32 11% 76%;
-    --muted-foreground: 28 8% 34%;
-    --accent: 4 80% 52%;
+    --secondary: 215 9% 70%;
+    --secondary-foreground: 220 18% 8%;
+    --muted: 215 11% 78%;
+    --muted-foreground: 215 7% 34%;
+    --accent: 356 82% 45%;
     --accent-foreground: 0 0% 100%;
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 98%;
-    --border: 30 10% 62%;
-    --input: 30 10% 62%;
-    --ring: 220 40% 15%;
-    --chart-1: 4 80% 52%;
-    --chart-2: 220 40% 15%;
-    --chart-3: 38 92% 50%;
-    --chart-4: 220 15% 60%;
-    --chart-5: 4 60% 70%;
+    --border: 215 8% 58%;
+    --input: 215 8% 58%;
+    --ring: 356 82% 45%;
+    --chart-1: 356 82% 45%;
+    --chart-2: 220 22% 10%;
+    --chart-3: 215 9% 60%;
+    --chart-4: 0 0% 92%;
+    --chart-5: 356 64% 62%;
     --radius: 0.75rem;
     --sidebar-background: 220 40% 12%;
     --sidebar-foreground: 0 0% 95%;
@@ -89,8 +89,8 @@
     @apply bg-background text-foreground antialiased;
     min-height: 100vh;
     background:
-      linear-gradient(135deg, hsl(var(--accent) / 0.12), transparent 28rem),
-      linear-gradient(180deg, hsl(32 11% 48%) 0%, hsl(var(--background)) 42%, hsl(28 9% 27%) 100%);
+      linear-gradient(135deg, hsl(var(--accent) / 0.2), transparent 28rem),
+      linear-gradient(180deg, hsl(216 10% 26%) 0%, hsl(var(--background)) 42%, hsl(220 14% 10%) 100%);
     font-family: var(--font-body);
   }
 
@@ -109,20 +109,21 @@
   .app-shell {
     @apply min-h-screen bg-background;
     background-image:
-      linear-gradient(90deg, hsl(30 8% 82% / 0.06) 1px, transparent 1px),
-      linear-gradient(0deg, hsl(30 8% 82% / 0.06) 1px, transparent 1px);
+      linear-gradient(90deg, hsl(0 0% 100% / 0.055) 1px, transparent 1px),
+      linear-gradient(0deg, hsl(0 0% 100% / 0.055) 1px, transparent 1px);
     background-size: 34px 34px;
   }
 
   .command-panel {
-    @apply border border-border/70 bg-card/95 shadow-[0_18px_55px_rgba(15,23,42,0.11)] backdrop-blur;
+    @apply border border-white/10 bg-card/95 shadow-[0_22px_70px_rgba(0,0,0,0.28)] backdrop-blur;
   }
 
   .metal-header {
     @apply border-b border-white/10 bg-slate-950 text-white;
     background-image:
-      linear-gradient(135deg, hsl(var(--accent) / 0.34), transparent 36%),
+      linear-gradient(135deg, hsl(var(--accent) / 0.48), transparent 36%),
+      linear-gradient(180deg, hsl(217 14% 23%), hsl(220 22% 8%)),
       linear-gradient(90deg, hsl(0 0% 100% / 0.08) 1px, transparent 1px);
-    background-size: auto, 28px 28px;
+    background-size: auto, auto, 28px 28px;
   }
 }
