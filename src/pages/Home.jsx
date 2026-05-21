@@ -59,11 +59,10 @@ export default function Home() {
           className="mx-auto sm:mx-0">
           
           <div className="relative">
-            <div className="absolute inset-3 rotate-45 rounded-2xl bg-red-600/25 blur-sm" />
             <img src="/images/horn-lake-logo.png"
 
             alt="Horn Lake Fire Department Logo"
-            className="relative h-36 w-36 object-contain drop-shadow-2xl sm:h-48 sm:w-48" />
+            className="relative h-36 w-36 object-contain drop-shadow-lg sm:h-48 sm:w-48" />
           </div>
           
         </motion.div>
@@ -87,7 +86,7 @@ export default function Home() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.25 }}
           className="mx-auto mt-3 max-w-2xl text-base font-medium leading-relaxed text-white/78 sm:mx-0 sm:text-lg">
-          Fast access to department forms, protocols, contacts, fire codes, and field resources from the iPad.
+          Department forms, protocols, contacts, fire codes, and field resources.
         </motion.p>
         <motion.div
           initial={{ opacity: 0, y: 12 }}
@@ -113,7 +112,7 @@ export default function Home() {
         <div className="mb-5 flex items-end justify-between gap-4">
           <div>
             <p className="text-xs font-black uppercase tracking-[0.22em] text-accent">Choose a section</p>
-            <h2 className="font-heading text-2xl font-bold uppercase tracking-wide text-foreground">Department tools</h2>
+            <h2 className="font-heading text-2xl font-bold uppercase tracking-wide text-foreground">Department Tools</h2>
           </div>
           <div className="hidden rounded-full border border-border/70 bg-card/80 px-4 py-2 text-xs font-black uppercase tracking-wide text-muted-foreground shadow-sm sm:block">
             iPad optimized
