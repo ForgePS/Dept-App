@@ -1,4 +1,5 @@
-import { Phone } from "lucide-react";
+import { useMemo, useState } from "react";
+import { Phone, Search, X } from "lucide-react";
 import PageHeader from "../components/PageHeader";
 import { motion } from "framer-motion";
 
@@ -62,43 +63,69 @@ const contacts = [
 ];
 
 export default function ImportantNumbers() {
+  const [search, setSearch] = useState("");
+  const filteredContacts = useMemo(() => {
+    const value = search.trim().toLowerCase();
+    if (!value) return contacts;
+    return contacts.filter((contact) =>
+      contact.name.toLowerCase().includes(value) ||
+      contact.numbers.some((number) => `${number.label} ${number.value}`.toLowerCase().includes(value))
+    );
+  }, [search]);
+
   return (
     <div className="min-h-screen bg-background">
-      <div className="max-w-2xl mx-auto px-5 py-8">
-        <PageHeader title="Important Numbers" backTo="/" />
+      <div className="max-w-5xl mx-auto px-5 py-8">
+        <PageHeader title="Important Numbers" subtitle="Tap a number to call from the iPad." backTo="/" />
+        <div className="relative mb-4">
+          <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
+          <input
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+            placeholder="Search contacts or numbers"
+            className="h-14 w-full rounded-2xl border border-border/70 bg-card/90 pl-12 pr-12 text-base text-foreground shadow-sm outline-none focus:ring-2 focus:ring-accent/40"
+          />
+          {search && (
+            <button
+              type="button"
+              onClick={() => setSearch("")}
+              className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+            >
+              <X className="h-5 w-5" />
+            </button>
+          )}
+        </div>
         <motion.div
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4, delay: 0.1 }}
-          className="rounded-2xl bg-card border border-border/60 shadow-sm overflow-hidden"
+          className="grid gap-3 sm:grid-cols-2"
         >
-          {contacts.map((contact, i) => (
+          {filteredContacts.map((contact, i) => (
             <div
               key={i}
-              className="flex items-start gap-4 px-5 py-4 border-b border-border/40 last:border-0 hover:bg-muted/30 transition-colors"
+              className="rounded-2xl border border-border/70 bg-card/95 p-4 shadow-sm transition-colors hover:border-accent/30"
             >
-              <div className="mt-0.5 w-8 h-8 rounded-lg bg-accent/10 flex items-center justify-center shrink-0">
-                <Phone className="w-4 h-4 text-accent" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="font-heading text-sm font-semibold text-foreground tracking-wide uppercase">
+              <div className="mb-3 flex items-center gap-3">
+                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-accent/10">
+                  <Phone className="h-5 w-5 text-accent" />
+                </div>
+                <p className="font-heading text-base font-semibold text-foreground tracking-wide uppercase">
                   {contact.name}
                 </p>
-                <div className="mt-1 space-y-0.5">
+              </div>
+              <div className="space-y-2">
                   {contact.numbers.map((n, j) => (
                     <div key={j} className="flex items-center gap-2">
-                      {contact.numbers.length > 1 && (
-                        <span className="text-xs text-muted-foreground w-14 shrink-0">{n.label}:</span>
-                      )}
+                      <span className="w-16 shrink-0 text-xs font-bold uppercase tracking-wide text-muted-foreground">{n.label}</span>
                       <a
                         href={`tel:${n.value.replace(/[^\d+]/g, "")}`}
-                        className="text-sm font-body text-accent hover:underline"
+                        className="flex min-h-11 flex-1 items-center justify-center rounded-xl bg-accent px-3 text-base font-black text-accent-foreground shadow-sm hover:bg-red-700"
                       >
                         {n.value}
                       </a>
                     </div>
                   ))}
-                </div>
               </div>
             </div>
           ))}

@@ -10,13 +10,13 @@ function SectionCard({ title, icon: Icon, items, delay = 0 }) {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, delay, ease: [0.22, 1, 0.36, 1] }}
-      className="rounded-2xl bg-card border border-border/60 shadow-sm overflow-hidden"
+      className="rounded-2xl bg-card/95 border border-border/70 shadow-sm overflow-hidden"
     >
-      <div className="px-6 py-4 border-b border-border/60 flex items-center gap-3">
-        <div className="w-10 h-10 rounded-xl bg-accent flex items-center justify-center shadow">
+      <div className="px-5 sm:px-6 py-5 border-b border-border/60 flex items-center gap-3 bg-slate-950 text-white">
+        <div className="w-11 h-11 rounded-xl bg-accent flex items-center justify-center shadow">
           <Icon className="w-5 h-5 text-white" />
         </div>
-        <h2 className="font-heading text-lg font-semibold text-foreground tracking-wide uppercase">
+        <h2 className="font-heading text-xl font-semibold tracking-wide uppercase">
           {title}
         </h2>
       </div>
@@ -25,7 +25,7 @@ function SectionCard({ title, icon: Icon, items, delay = 0 }) {
           <Link
             key={item.label}
             to={item.to}
-            className="group flex items-center gap-4 px-6 py-4 hover:bg-muted/50 transition-colors"
+            className="group flex min-h-[76px] items-center gap-4 px-5 sm:px-6 py-4 hover:bg-muted/50 transition-colors"
           >
             <div className="w-9 h-9 rounded-lg bg-secondary flex items-center justify-center group-hover:bg-accent/10 transition-colors">
               <item.icon className="w-4.5 h-4.5 text-muted-foreground group-hover:text-accent transition-colors" />
@@ -53,13 +53,13 @@ export default function InspectionDivision() {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="max-w-2xl mx-auto px-5 py-8">
+      <div className="max-w-5xl mx-auto px-5 py-8">
         <PageHeader
           title="Inspection Division"
           subtitle="Forms, permits & code enforcement"
           backTo="/"
         />
-        <div className="space-y-5">
+        <div className="grid gap-5 lg:grid-cols-2">
           <SectionCard title="Forms" icon={FileText} items={formsItems} delay={0.1} />
           <SectionCard title="Codes" icon={BookOpen} items={codesItems} delay={0.2} />
         </div>

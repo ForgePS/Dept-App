@@ -1,5 +1,4 @@
-import { Stethoscope, Flame, ClipboardCheck, Search, Phone } from "lucide-react";
-// Flame still used in cards array below
+import { Stethoscope, Flame, ClipboardCheck, Search, Phone, ShieldCheck, Radio, Clock3 } from "lucide-react";
 import { motion } from "framer-motion";
 import DashboardCard from "../components/DashboardCard";
 
@@ -7,79 +6,107 @@ export default function Home() {
   const cards = [
   {
     title: "EMS",
-    description: "Emergency Medical Services documentation",
+    description: "Forms, protocols, and EMS quick-reference material.",
     icon: Stethoscope,
     to: "/ems-forms",
-    color: "bg-accent"
+    color: "bg-red-600",
+    action: "EMS tools"
   },
   {
     title: "Fire",
-    description: "Fire department reports & documentation",
+    description: "Forms, SOGs, fire resources, and department documents.",
     icon: Flame,
     to: "/fire-forms",
-    color: "bg-primary"
+    color: "bg-slate-950",
+    action: "Fire tools"
   },
   {
     title: "Inspection Division",
-    description: "Inspections, permits & code enforcement",
+    description: "Inspection forms, permits, and searchable 2024 IFC codes.",
     icon: ClipboardCheck,
     to: "/inspection-division",
-    color: "bg-accent"
+    color: "bg-red-600",
+    action: "Inspect"
   },
   {
     title: "Investigation Division",
-    description: "Fire investigation reports & cases",
+    description: "Investigation resources and case documentation.",
     icon: Search,
     to: "/investigation-division",
-    color: "bg-primary"
+    color: "bg-slate-950",
+    action: "Review"
   },
   {
     title: "Important Numbers",
-    description: "Key contacts & emergency numbers",
+    description: "Tap-to-call contacts for dispatch, city support, and vendors.",
     icon: Phone,
     to: "/important-numbers",
-    color: "bg-accent"
+    color: "bg-red-600",
+    action: "Call list"
   }];
 
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Hero Banner */}
-      <div className="relative flex flex-col items-center pt-10 pb-6 px-5 shadow-sm border-b border-slate-400/40 opacity-100 bg-slate-400">
+      <div className="relative overflow-hidden border-b border-slate-900/20 bg-slate-950 text-white">
+        <div className="absolute inset-0 bg-[linear-gradient(135deg,rgba(220,38,38,0.26),transparent_34%),linear-gradient(90deg,rgba(255,255,255,0.08)_1px,transparent_1px),linear-gradient(0deg,rgba(255,255,255,0.06)_1px,transparent_1px)] bg-[length:auto,48px_48px,48px_48px]" />
+        <div className="relative mx-auto grid max-w-6xl gap-6 px-5 py-8 sm:grid-cols-[auto_1fr] sm:items-center sm:py-10">
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.5 }}
-          className="mb-4">
+          className="mx-auto sm:mx-0">
           
           <img src="https://media.base44.com/images/public/69f9c7cc9025b4328efe3ba3/55c2ce711_Untitled.png"
 
           alt="Horn Lake Fire Department Logo"
-          className="w-44 h-44 object-contain opacity-100"
-          style={{ mixBlendMode: 'multiply' }} />
+          className="h-32 w-32 rounded-3xl bg-white/95 object-contain p-3 shadow-2xl ring-1 ring-white/20 sm:h-40 sm:w-40"
+          style={{ mixBlendMode: 'normal' }} />
           
         </motion.div>
-        <motion.h1
+        <div className="text-center sm:text-left">
+        <motion.p
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.1 }}
-          className="font-heading text-3xl md:text-4xl font-bold text-foreground tracking-wider uppercase text-center">
-          
-          Horn Lake Fire/EMS
-        </motion.h1>
-        <motion.p
+          className="text-xs font-black uppercase tracking-[0.28em] text-red-300">
+          Field-ready command hub
+        </motion.p>
+        <motion.h1
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.2 }}
-          className="font-body mt-1.5 text-center text-lg text-[hsl(var(--card-foreground))]">
-          
-          Department Resource Hub
-        </motion.p>
+          className="mt-2 font-heading text-4xl font-bold uppercase leading-none tracking-wide sm:text-6xl">
+          Horn Lake Fire/EMS
+        </motion.h1>
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.3 }}
+          className="mt-5 grid grid-cols-3 gap-2 text-left">
+          {[
+            { label: "Ready", icon: ShieldCheck },
+            { label: "Fast", icon: Clock3 },
+            { label: "Connected", icon: Radio },
+          ].map((item) => (
+            <div key={item.label} className="rounded-2xl border border-white/15 bg-white/10 px-3 py-3 backdrop-blur">
+              <item.icon className="mb-2 h-5 w-5 text-red-300" />
+              <p className="text-xs font-bold uppercase tracking-wide text-white/90">{item.label}</p>
+            </div>
+          ))}
+        </motion.div>
+        </div>
+        </div>
       </div>
 
-      {/* Cards */}
-      <div className="max-w-2xl mx-auto px-5 pb-12">
-        <div className="space-y-4">
+      <div className="mx-auto max-w-6xl px-5 py-6 sm:py-8">
+        <div className="mb-4 flex items-end justify-between gap-4">
+          <div>
+            <p className="text-xs font-black uppercase tracking-[0.22em] text-accent">Choose a section</p>
+            <h2 className="font-heading text-2xl font-bold uppercase tracking-wide text-foreground">Department tools</h2>
+          </div>
+        </div>
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
           {cards.map((card, i) =>
           <DashboardCard key={card.title} {...card} delay={0.15 + i * 0.08} />
           )}
