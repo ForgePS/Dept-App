@@ -157,14 +157,14 @@ export default function FireFormsPage() {
                           : "bg-card hover:bg-muted/50"
                       }`}
                     >
-                      <span className="flex h-10 w-14 shrink-0 items-center justify-center rounded-xl bg-accent text-xs font-black text-white shadow-sm">
+                      <span className="flex h-11 w-16 shrink-0 items-center justify-center rounded-xl bg-accent text-sm font-black text-white shadow-sm ring-2 ring-white/50">
                         {sog.code}
                       </span>
                       <span className="min-w-0 flex-1">
-                        <span className="block text-sm font-black text-foreground">
+                        <span className="block text-base font-black leading-snug text-slate-950">
                           {sog.title}
                         </span>
-                        <span className="mt-1 block text-xs font-semibold text-slate-700">
+                        <span className="mt-1 block text-sm font-bold text-slate-700">
                           Page {sog.page}
                         </span>
                       </span>

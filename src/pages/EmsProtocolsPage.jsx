@@ -134,14 +134,14 @@ export default function EmsProtocolsPage() {
                           activeProtocol.number === protocol.number ? "bg-accent/15" : "bg-card hover:bg-muted/40"
                         }`}
                       >
-                        <span className="flex h-12 w-20 shrink-0 items-center justify-center rounded-xl bg-accent text-xs font-black text-white shadow-sm">
+                        <span className="flex h-12 w-24 shrink-0 items-center justify-center rounded-xl bg-accent text-[13px] font-black text-white shadow-sm ring-2 ring-white/50">
                           SOG #{protocol.number}
                         </span>
                         <span className="min-w-0 flex-1">
-                          <span className="block text-sm font-black leading-snug text-foreground">
+                          <span className="block text-base font-black leading-snug text-slate-950">
                             {highlight(protocol.title, search)}
                           </span>
-                          <span className="mt-1 block text-xs font-semibold text-slate-700">{protocol.category}</span>
+                          <span className="mt-1 block text-sm font-bold text-slate-700">{protocol.category}</span>
                         </span>
                         <ChevronRight className="h-4 w-4 shrink-0 text-accent transition-transform group-hover:translate-x-0.5" />
                       </button>

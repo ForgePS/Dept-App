@@ -316,13 +316,13 @@ export default function FireCodesPage() {
                       const hasLocalPdf = Boolean(chapter.pdfUrl || CODE_DOCS[String(chapter.num)]);
                       return (
                         <button key={`${chapter.num}-${chapterIndex}`} type="button" onClick={() => selectChapter(chapter)} className="group flex w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-muted/40">
-                          <span className="w-12 shrink-0 text-center text-xs font-heading font-bold text-accent">{typeof chapter.num === "number" ? `Ch. ${chapter.num}` : `App. ${chapter.num}`}</span>
-                          {typeof chapter.num === "number" && <span className={`shrink-0 rounded px-2 py-0.5 text-xs font-heading font-semibold ${hasLocalPdf ? "bg-accent/10 text-accent" : "bg-muted text-muted-foreground"}`}>{chapter.num * 100}</span>}
+                          <span className="w-16 shrink-0 rounded-lg bg-accent px-2 py-1 text-center text-xs font-black text-white shadow-sm ring-2 ring-white/50">{typeof chapter.num === "number" ? `Ch. ${chapter.num}` : `App. ${chapter.num}`}</span>
+                          {typeof chapter.num === "number" && <span className={`shrink-0 rounded-lg px-2.5 py-1 text-sm font-black ${hasLocalPdf ? "bg-slate-950 text-white" : "bg-slate-800 text-white"}`}>{chapter.num * 100}</span>}
                           <span className="min-w-0 flex-1">
-                            <span className="block text-sm leading-snug text-foreground font-body">{highlight(chapter.title, search)}</span>
-                            <span className="mt-1 block text-xs text-muted-foreground font-body">{chapter.pages}</span>
+                            <span className="block text-base font-black leading-snug text-slate-950">{highlight(chapter.title, search)}</span>
+                            <span className="mt-1 block text-sm font-bold text-slate-700">{chapter.pages}</span>
                           </span>
-                          <ExternalLink className="h-3.5 w-3.5 shrink-0 text-muted-foreground transition-colors group-hover:text-accent" />
+                          <ExternalLink className="h-4 w-4 shrink-0 text-accent transition-colors" />
                         </button>
                       );
                     })}
@@ -343,16 +343,16 @@ export default function FireCodesPage() {
                         onClick={() => selectCodeSection(section)}
                         className="group flex w-full gap-3 px-4 py-3 text-left transition-colors hover:bg-muted/40"
                       >
-                        <span className="mt-0.5 w-20 shrink-0 rounded-lg bg-slate-950 px-2 py-1 text-center text-xs font-black text-white">
+                        <span className="mt-0.5 w-24 shrink-0 rounded-lg bg-accent px-2 py-1.5 text-center text-sm font-black text-white shadow-sm ring-2 ring-white/50">
                           {section.section}
                         </span>
                         <span className="min-w-0 flex-1">
-                          <span className="block text-sm font-semibold leading-snug text-foreground">{highlight(section.title, search)}</span>
-                          <span className="mt-1 block text-xs text-muted-foreground">
+                          <span className="block text-base font-black leading-snug text-slate-950">{highlight(section.title, search)}</span>
+                          <span className="mt-1 block text-sm font-bold text-slate-700">
                             Chapter {section.chapter} - {section.chapterTitle}
                           </span>
                         </span>
-                        <ExternalLink className="mt-1 h-3.5 w-3.5 shrink-0 text-muted-foreground transition-colors group-hover:text-accent" />
+                        <ExternalLink className="mt-1 h-4 w-4 shrink-0 text-accent transition-colors" />
                       </button>
                     ))}
                   </div>
@@ -367,10 +367,10 @@ export default function FireCodesPage() {
                   <div className="divide-y divide-border/30">
                     {filteredIndex.map((entry, entryIndex) => (
                       <div key={`${entry.title}-${entryIndex}`} className="px-4 py-3">
-                        <p className="text-sm font-medium leading-snug text-foreground font-body">{highlight(entry.title, search)}</p>
+                        <p className="text-base font-black leading-snug text-slate-950">{highlight(entry.title, search)}</p>
                         <div className="mt-2 flex flex-wrap gap-2">
                           {entry.refs.map((ref, refIndex) => (
-                            <button key={`${ref.label}-${refIndex}`} type="button" onClick={() => selectIndexRef(ref)} className="rounded-md border border-border bg-background px-2 py-1 text-xs font-semibold text-accent hover:bg-muted">
+                            <button key={`${ref.label}-${refIndex}`} type="button" onClick={() => selectIndexRef(ref)} className="rounded-md border border-border bg-accent px-2.5 py-1 text-xs font-black text-white shadow-sm hover:bg-red-700">
                               {ref.label}
                             </button>
                           ))}
@@ -413,12 +413,12 @@ export default function FireCodesPage() {
                       <div className="divide-y divide-border/30">
                         {section.chapters.map((chapter) => (
                           <button key={`${section.part}-${chapter.num}`} type="button" onClick={() => selectChapter(chapter)} className="flex w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-muted/60">
-                            <span className="w-20 shrink-0 rounded-lg bg-slate-950 px-2 py-1 text-center text-xs font-black text-white">
+                            <span className="w-24 shrink-0 rounded-lg bg-accent px-2 py-1.5 text-center text-sm font-black text-white shadow-sm ring-2 ring-white/50">
                               {typeof chapter.num === "number" ? `Ch. ${chapter.num}` : `App. ${chapter.num}`}
                             </span>
                             <span className="min-w-0 flex-1">
-                              <span className="block text-sm font-semibold text-foreground">{chapter.title}</span>
-                              <span className="mt-1 block text-xs text-muted-foreground">{chapter.pages}</span>
+                              <span className="block text-base font-black leading-snug text-slate-950">{chapter.title}</span>
+                              <span className="mt-1 block text-sm font-bold text-slate-700">{chapter.pages}</span>
                             </span>
                           </button>
                         ))}
@@ -437,10 +437,10 @@ export default function FireCodesPage() {
                 <div className="space-y-3">
                   {fireCodeIndex.map((entry, entryIndex) => (
                     <div key={`${entry.title}-${entryIndex}`} className="rounded-xl border border-border/40 bg-background/80 px-4 py-3">
-                      <p className="text-sm font-semibold leading-snug text-foreground">{entry.title}</p>
+                      <p className="text-base font-black leading-snug text-slate-950">{entry.title}</p>
                       <div className="mt-2 flex flex-wrap gap-2">
                         {entry.refs.map((ref, refIndex) => (
-                          <button key={`${entry.title}-${ref.label}-${refIndex}`} type="button" onClick={() => selectIndexRef(ref)} className="rounded-md border border-border bg-card px-2 py-1 text-xs font-semibold text-accent hover:bg-muted">
+                          <button key={`${entry.title}-${ref.label}-${refIndex}`} type="button" onClick={() => selectIndexRef(ref)} className="rounded-md border border-border bg-accent px-2.5 py-1 text-xs font-black text-white shadow-sm hover:bg-red-700">
                             {ref.label}
                           </button>
                         ))}
@@ -489,11 +489,11 @@ export default function FireCodesPage() {
                       onClick={() => selectCodeSection(section)}
                       className="group w-full rounded-xl border border-border/40 bg-background/80 px-4 py-3 text-left transition-colors hover:bg-muted/70"
                     >
-                      <span className="block text-xs font-black uppercase tracking-wide text-accent">{section.section}</span>
-                      <span className="mt-1 block font-heading text-base font-semibold uppercase tracking-wide text-foreground">
+                      <span className="inline-flex rounded-lg bg-accent px-2.5 py-1 text-sm font-black uppercase tracking-wide text-white shadow-sm ring-2 ring-white/50">{section.section}</span>
+                      <span className="mt-2 block font-heading text-lg font-black uppercase tracking-wide text-slate-950">
                         {section.title}
                       </span>
-                      <span className="mt-2 line-clamp-2 block text-sm leading-6 text-muted-foreground">
+                      <span className="mt-2 line-clamp-2 block text-sm font-semibold leading-6 text-slate-700">
                         {section.body[0]}
                       </span>
                     </button>
