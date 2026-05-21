@@ -148,10 +148,33 @@ export default function FireCodesPage() {
     []
   );
   const localChapterDocs = useMemo(() => new Set(Object.keys(CODE_DOCS).filter((key) => /^\d+$/.test(key))), []);
+  const sectionsByChapter = useMemo(() => {
+    return fireCodeSections.reduce((acc, section) => {
+      const key = String(section.chapter);
+      acc[key] = acc[key] || [];
+      acc[key].push(section);
+      return acc;
+    }, {});
+  }, []);
 
   const getChapterTarget = (chapter) => chapter.pdfUrl || CODE_DOCS[String(chapter.num)] || `${BASE_URL}#${chapter.anchor}`;
 
   const selectChapter = (chapter) => {
+    const chapterSections = sectionsByChapter[String(chapter.num)] || [];
+    const hasLocalPdf = Boolean(chapter.pdfUrl || CODE_DOCS[String(chapter.num)]);
+
+    if (!hasLocalPdf && chapterSections.length > 0) {
+      setSelectedDoc({
+        type: "chapter",
+        title: chapter.title,
+        label: typeof chapter.num === "number" ? `Chapter ${chapter.num}` : `Appendix ${chapter.num}`,
+        url: getChapterTarget(chapter),
+        chapter,
+        sections: chapterSections,
+      });
+      return;
+    }
+
     setSelectedDoc({
       title: chapter.title,
       label: typeof chapter.num === "number" ? `${chapter.num * 100}` : `Appendix ${chapter.num}`,
@@ -170,7 +193,7 @@ export default function FireCodesPage() {
       return;
     }
     if (chapter) {
-      window.open(`${BASE_URL}#${chapter.anchor}`, "_blank", "noopener,noreferrer");
+      selectChapter(chapter);
       return;
     }
     setSelectedDoc({ title: "Index", label: ref.label, url: CODE_DOCS.index });
@@ -372,7 +395,7 @@ export default function FireCodesPage() {
               </div>
               <a href={selectedDoc.url} target="_blank" rel="noopener noreferrer" className="inline-flex h-9 items-center gap-2 rounded-lg border border-border px-3 text-sm font-medium text-foreground hover:bg-muted">
                 <ExternalLink className="h-4 w-4" />
-                {selectedDoc.type === "code" ? "Open Chapter" : "Open"}
+                {selectedDoc.type === "code" || selectedDoc.type === "chapter" ? "Open Chapter" : "Open"}
               </a>
             </div>
             {selectedDoc.type === "code" ? (
@@ -391,6 +414,38 @@ export default function FireCodesPage() {
                     <p key={`${selectedDoc.section.section}-${index}`} className="rounded-xl border border-border/40 bg-background/80 px-4 py-3 text-sm leading-6 text-foreground">
                       {highlight(line, search)}
                     </p>
+                  ))}
+                </div>
+              </div>
+            ) : selectedDoc.type === "chapter" ? (
+              <div className="h-[74vh] overflow-y-auto bg-card px-5 py-5 sm:px-7">
+                <div className="mb-5 rounded-2xl border border-border/60 bg-muted/35 p-4">
+                  <p className="text-xs font-black uppercase tracking-widest text-muted-foreground">
+                    {selectedDoc.label}
+                  </p>
+                  <h3 className="mt-1 font-heading text-2xl font-semibold uppercase tracking-wide text-foreground">
+                    {selectedDoc.title}
+                  </h3>
+                  <p className="mt-2 text-sm text-muted-foreground">
+                    {selectedDoc.sections.length} searchable section{selectedDoc.sections.length !== 1 ? "s" : ""} connected to this chapter.
+                  </p>
+                </div>
+                <div className="space-y-3">
+                  {selectedDoc.sections.map((section) => (
+                    <button
+                      key={section.section}
+                      type="button"
+                      onClick={() => selectCodeSection(section)}
+                      className="group w-full rounded-xl border border-border/40 bg-background/80 px-4 py-3 text-left transition-colors hover:bg-muted/70"
+                    >
+                      <span className="block text-xs font-black uppercase tracking-wide text-accent">{section.section}</span>
+                      <span className="mt-1 block font-heading text-base font-semibold uppercase tracking-wide text-foreground">
+                        {section.title}
+                      </span>
+                      <span className="mt-2 line-clamp-2 block text-sm leading-6 text-muted-foreground">
+                        {section.body[0]}
+                      </span>
+                    </button>
                   ))}
                 </div>
               </div>
