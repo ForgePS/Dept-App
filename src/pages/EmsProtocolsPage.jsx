@@ -1,5 +1,4 @@
 import { useMemo, useState } from "react";
-import { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import { BookOpen, ChevronRight, FileText, Search, X } from "lucide-react";
 import PageHeader from "../components/PageHeader";
@@ -36,13 +35,6 @@ export default function EmsProtocolsPage() {
   const [search, setSearch] = useState("");
   const [activeProtocol, setActiveProtocol] = useState(emsProtocols[0]);
   const isSearching = search.trim().length > 0;
-  const openProtocolWindow = (protocol) => {
-    const protocolUrl = `${window.location.origin}/ems-forms/protocols?protocol=${encodeURIComponent(protocol.number)}`;
-    const popup = window.open(protocolUrl, "_blank", "noopener,noreferrer,width=1280,height=920");
-    if (!popup) return;
-    popup.opener = null;
-    popup.focus();
-  };
 
   const filteredProtocols = useMemo(() => {
     if (!isSearching) return emsProtocols;
@@ -60,16 +52,6 @@ export default function EmsProtocolsPage() {
         .filter((section) => section.protocols.length > 0),
     [filteredProtocols]
   );
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const requestedProtocol = params.get("protocol");
-    if (!requestedProtocol) return;
-
-    const match = emsProtocols.find((protocol) => String(protocol.number) === requestedProtocol);
-    if (match) {
-      setActiveProtocol(match);
-    }
-  }, []);
 
   return (
     <div className="app-shell">
@@ -95,7 +77,33 @@ export default function EmsProtocolsPage() {
                   <p className="font-heading text-lg font-semibold uppercase tracking-wide">2018 EMS Treatment Guidelines</p>
                   <p className="mt-0.5 text-xs text-white/70">79 searchable Horn Lake Fire & EMS protocols</p>
                 </div>
-@@ -107,51 +124,54 @@ export default function EmsProtocolsPage() {
+              </div>
+            </motion.div>
+
+            <div className="relative">
+              <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
+              <input
+                type="text"
+                placeholder="Search chest pain, Narcan, SOG 302..."
+                value={search}
+                onChange={(event) => setSearch(event.target.value)}
+                className="h-14 w-full rounded-2xl border border-border/70 bg-card/95 pl-12 pr-12 text-base text-foreground shadow-[0_14px_40px_rgba(15,23,42,0.08)] outline-none placeholder:text-muted-foreground focus:ring-2 focus:ring-accent/40"
+              />
+              {search && (
+                <button
+                  type="button"
+                  onClick={() => setSearch("")}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  aria-label="Clear search"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              )}
+            </div>
+
+            {isSearching && (
+              <p className="text-xs text-muted-foreground font-body">
+                {filteredProtocols.length} result{filteredProtocols.length !== 1 ? "s" : ""} found
               </p>
             )}
 
@@ -122,10 +130,6 @@ export default function EmsProtocolsPage() {
                         key={protocol.number}
                         type="button"
                         onClick={() => setActiveProtocol(protocol)}
-                        onClick={() => {
-                          setActiveProtocol(protocol);
-                          openProtocolWindow(protocol);
-                        }}
                         className={`group flex min-h-[76px] w-full items-center gap-3 px-4 py-3 text-left transition-colors ${
                           activeProtocol.number === protocol.number ? "bg-accent/15" : "bg-card hover:bg-muted/40"
                         }`}
@@ -151,3 +155,41 @@ export default function EmsProtocolsPage() {
           <section className="command-panel min-h-[78vh] overflow-hidden rounded-2xl">
             <div className="metal-header flex flex-wrap items-center gap-3 px-5 py-4">
               <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-white/10">
+                <FileText className="h-5 w-5 text-white" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-xs font-black uppercase tracking-wide text-white/65">SOG #{activeProtocol.number}</p>
+                <h2 className="font-heading text-lg font-semibold uppercase tracking-wide text-white">
+                  {activeProtocol.title}
+                </h2>
+              </div>
+            </div>
+
+            <div className="max-h-[74vh] overflow-y-auto px-5 py-5 sm:px-7">
+              <div className="mb-5 rounded-2xl border border-border/60 bg-muted/35 p-4">
+                <p className="text-xs font-black uppercase tracking-widest text-muted-foreground">{activeProtocol.category}</p>
+                <p className="mt-2 text-sm text-muted-foreground">
+                  Tap another protocol number on the left to jump directly to its matching guideline.
+                </p>
+              </div>
+
+              <div className="space-y-3">
+                {activeProtocol.body.map((line, index) =>
+                  isSectionLabel(line) ? (
+                    <h3 key={`${activeProtocol.number}-${index}`} className="pt-3 font-heading text-sm font-black uppercase tracking-wide text-accent">
+                      {highlight(line, search)}
+                    </h3>
+                  ) : (
+                    <p key={`${activeProtocol.number}-${index}`} className="rounded-xl border border-border/40 bg-background/70 px-4 py-3 text-sm leading-6 text-foreground">
+                      {highlight(line, search)}
+                    </p>
+                  )
+                )}
+              </div>
+            </div>
+          </section>
+        </div>
+      </div>
+    </div>
+  );
+}
