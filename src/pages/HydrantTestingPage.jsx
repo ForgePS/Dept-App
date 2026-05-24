@@ -336,6 +336,7 @@ export default function HydrantTestingPage() {
             <InspectionScreen
               form={form}
               inspectionRows={inspectionRows}
+              saveHydrant={saveHydrant}
               updateForm={updateForm}
               updateInspectionRow={updateInspectionRow}
               saveInspection={saveInspection}
@@ -581,8 +582,24 @@ function FlowTestScreen({ flow, form, handleHydrantIdInput, saveHydrant, saveTes
 
   return (
     <div className="p-5">
-      <Panel title="Flow Test" subtitle="Record pitot, static, residual, and NFPA color classification.">
-        <div className="grid gap-4 p-5 lg:grid-cols-4">
+      <div className="grid gap-5 xl:grid-cols-[380px_1fr]">
+        <Panel title="Hydrant Info" subtitle="Save hydrant details without creating a flow test.">
+          <div className="grid gap-4 p-5">
+            <Field label="Hydrant ID" value={form.hydrant_id} onChange={handleHydrantIdInput} />
+            <Select label="District" value={form.district} onChange={(value) => updateForm("district", value)} options={["", "1", "2", "3"]} />
+            <Field label="Address" value={form.location} onChange={(value) => updateForm("location", value)} />
+            <Field label="Provider" value={form.provider} onChange={(value) => updateForm("provider", value)} />
+            <Select label="Status" value={form.status} onChange={(value) => updateForm("status", value)} options={["In Service", "Out of Service"]} />
+            <label className="grid gap-2">
+              <span className="text-sm font-bold">Hydrant Notes</span>
+              <textarea value={form.notes || ""} onChange={(event) => updateForm("notes", event.target.value)} className="hydrant-input min-h-24 resize-y" placeholder="Enter hydrant notes..." />
+            </label>
+            <ActionButton icon={Droplets} label="Save Hydrant Info" onClick={saveHydrant} />
+          </div>
+        </Panel>
+
+        <Panel title="Flow Test" subtitle="Record pitot, static, residual, and NFPA color classification.">
+          <div className="grid gap-4 p-5 lg:grid-cols-4">
           <Field label="Hydrant ID" value={form.hydrant_id} onChange={handleHydrantIdInput} />
           <Select label="District" value={form.district} onChange={(value) => updateForm("district", value)} options={["", "1", "2", "3"]} />
           <Field className="lg:col-span-2" label="Address" value={form.location} onChange={(value) => updateForm("location", value)} />
@@ -617,16 +634,17 @@ function FlowTestScreen({ flow, form, handleHydrantIdInput, saveHydrant, saveTes
           </label>
           <div className="flex flex-wrap gap-4 lg:col-span-4">
             <ActionButton icon={Save} label="Save Test" onClick={saveTest} />
-            <ActionButton icon={Droplets} label="Save Hydrant" variant="outline" onClick={saveHydrant} />
+            <ActionButton icon={Droplets} label="Save Hydrant Info" variant="outline" onClick={saveHydrant} />
             <ActionButton icon={MapPin} label="View on Map" variant="outline" onClick={() => setScreen("map")} />
           </div>
-        </div>
-      </Panel>
+          </div>
+        </Panel>
+      </div>
     </div>
   );
 }
 
-function InspectionScreen({ form, inspectionRows, updateForm, updateInspectionRow, saveInspection }) {
+function InspectionScreen({ form, inspectionRows, updateForm, updateInspectionRow, saveInspection, saveHydrant }) {
   const handlePhotoUpload = async (index, file) => {
     if (!file) return;
     const photo = await fileToDataUrl(file);
@@ -700,7 +718,7 @@ function InspectionScreen({ form, inspectionRows, updateForm, updateInspectionRo
 
       <div className="mt-5 flex flex-wrap justify-between gap-4">
         <ActionButton icon={FileText} label="Add Note" variant="darkOutline" />
-        <ActionButton icon={Save} label="Save Draft" variant="darkOutline" />
+        <ActionButton icon={Save} label="Save Hydrant Info" variant="darkOutline" onClick={saveHydrant} />
         <ActionButton icon={Check} label="Complete Inspection" onClick={saveInspection} />
       </div>
     </div>
