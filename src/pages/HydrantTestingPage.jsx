@@ -5,7 +5,6 @@ import { CircleMarker, MapContainer, Popup, TileLayer, useMap } from "react-leaf
 import "leaflet/dist/leaflet.css";
 import {
   ArrowLeft,
-  BriefcaseBusiness,
   CalendarDays,
   Camera,
   Check,
@@ -42,13 +41,10 @@ const checklistItems = [
   ["Operable (Turns Open/Closed)", "Operated smoothly."],
   ["Caps Present", "All caps present."],
   ["Threads in Good Condition", "Threads clean and intact."],
-  ["Tag Attached & Readable", "Tag attached and readable."],
   ["Oil Nut Provided", "Oil nut in place."],
   ["Barrel Drains Properly", "Drains as expected."],
   ["Leaks (Valve / Caps / Barrel)", "No leaks detected."],
-  ["Paint / Reflective Visible", "Paint good, reflector visible."],
   ["Steamer Port / Pumper Outlet Good", "Outlet threads good."],
-  ["Accessible (Not Blocked)", "Clear access."],
   ["Adequate Clearance (3 ft all sides)", "Meets clearance requirement."],
 ];
 
@@ -93,6 +89,13 @@ const getNfpaClass = (flowGpm) => {
   return nfpaClasses.find((item) => flowValue >= item.min) || nfpaClasses[nfpaClasses.length - 1];
 };
 
+const getHydrantStyle = (hydrant = {}) => {
+  if (hydrant?.status === "Out of Service") return { label: "Out of Service", range: "Out of service", min: 0, color: "#111827", text: "Black" };
+  const flowValue = Number(hydrant?.flow_gpm || 0);
+  if (!Number.isFinite(flowValue) || flowValue <= 0) return { label: "Not Tested", range: "No flow result", min: 0, color: "#64748b", text: "Gray" };
+  return getNfpaClass(flowValue);
+};
+
 const getHydrantPosition = (hydrant) => {
   if (!hydrant) return null;
   const lat = Number(hydrant.latitude || hydrant.lat);
@@ -124,6 +127,7 @@ export default function HydrantTestingPage() {
   const [status, setStatus] = useState("All");
   const [query, setQuery] = useState("");
   const [selectedHydrant, setSelectedHydrant] = useState(null);
+  const [crew, setCrew] = useState({ tested_by: "", shift: "A" });
   const [form, setForm] = useState({ ...emptyHydrant, tested_at: todayInput() });
   const [inspectionRows, setInspectionRows] = useState(() =>
     checklistItems.map(([item, notes]) => ({ item, result: "Yes", notes, repair_needed: "No", photo: "" })),
@@ -171,10 +175,6 @@ export default function HydrantTestingPage() {
     setHydrants(hydrantsData.hydrants || []);
     setTests(testsData.tests || []);
     setInspections(inspectionsData.inspections || []);
-
-    if (!selectedHydrant && hydrantsData.hydrants?.[0]) {
-      selectHydrant(hydrantsData.hydrants[0]);
-    }
   };
 
   useEffect(() => {
@@ -189,13 +189,18 @@ export default function HydrantTestingPage() {
       hydrant_id: hydrant.hydrant_id || hydrant.location_id || "",
       location: hydrant.location || hydrant.address || "",
       discharge_size: hydrant.discharge_size || "2.5",
-      tested_by: hydrant.tested_by || form.tested_by || "",
-      shift: hydrant.shift || form.shift || "A",
+      tested_by: crew.tested_by,
+      shift: crew.shift,
       tested_at: todayInput(),
     });
   };
 
   const updateForm = (field, value) => {
+    setForm((current) => ({ ...current, [field]: value }));
+  };
+
+  const updateCrew = (field, value) => {
+    setCrew((current) => ({ ...current, [field]: value }));
     setForm((current) => ({ ...current, [field]: value }));
   };
 
@@ -225,7 +230,7 @@ export default function HydrantTestingPage() {
     const result = await api("/api/hydrants", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(form),
+      body: JSON.stringify({ ...form, tested_by: crew.tested_by, shift: crew.shift }),
     });
     setMessage("Hydrant saved.");
     selectHydrant(result.hydrant);
@@ -238,6 +243,8 @@ export default function HydrantTestingPage() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         ...form,
+        tested_by: crew.tested_by,
+        shift: crew.shift,
         location_id: selectedHydrant?.location_id || form.location_id,
         flow_gpm: flow,
       }),
@@ -255,8 +262,8 @@ export default function HydrantTestingPage() {
         location_id: selectedHydrant?.location_id || form.location_id,
         district: form.district,
         status: form.status,
-        tested_by: form.tested_by,
-        shift: form.shift,
+        tested_by: crew.tested_by,
+        shift: crew.shift,
         notes: form.notes,
         inspected_at: form.tested_at,
         checklist: inspectionRows,
@@ -305,8 +312,8 @@ export default function HydrantTestingPage() {
             <div className="flex items-center gap-3">
               <div className="grid h-12 w-12 place-items-center rounded-full border-2 border-red-600 bg-[#111] text-xs font-black">HLFD</div>
               <div className="min-w-0">
-                <p className="truncate text-sm font-bold">{form.tested_by || "Field User"}</p>
-                <p className="text-sm text-white/70">{form.shift || "A"} Shift</p>
+                <p className="truncate text-sm font-bold">{crew.tested_by || "Field User"}</p>
+                <p className="text-sm text-white/70">{crew.shift || "A"} Shift</p>
               </div>
               <ChevronDown className="ml-auto h-4 w-4 text-white/60" />
             </div>
@@ -344,6 +351,7 @@ export default function HydrantTestingPage() {
           {screen === "inspection" ? (
             <InspectionScreen
               form={form}
+              crew={crew}
               inspectionRows={inspectionRows}
               saveHydrant={saveHydrant}
               updateForm={updateForm}
@@ -352,6 +360,7 @@ export default function HydrantTestingPage() {
             />
           ) : (
             <DashboardScreen
+              crew={crew}
               form={form}
               flow={flow}
               hydrants={hydrants}
@@ -371,6 +380,7 @@ export default function HydrantTestingPage() {
               toggleDistrict={toggleDistrict}
               inspections={inspections}
               mappedHydrants={mappedHydrants}
+              updateCrew={updateCrew}
               updateForm={updateForm}
               visibleHydrants={visibleHydrants}
             />
@@ -383,6 +393,7 @@ export default function HydrantTestingPage() {
 
 function DashboardScreen(props) {
   const {
+    crew,
     form,
     flow,
     hydrants,
@@ -402,6 +413,7 @@ function DashboardScreen(props) {
     toggleDistrict,
     inspections,
     mappedHydrants,
+    updateCrew,
     updateForm,
     visibleHydrants,
   } = props;
@@ -474,6 +486,13 @@ function DashboardScreen(props) {
 
       <div className="grid gap-5 xl:grid-cols-[360px_1fr]">
         <div className="grid gap-4">
+          <Panel title="Crew">
+            <div className="grid gap-4 p-4">
+              <Field label="Tested By" value={crew.tested_by} onChange={(value) => updateCrew("tested_by", value)} />
+              <Select label="Shift" value={crew.shift} onChange={(value) => updateCrew("shift", value)} options={["A", "B", "C"]} />
+            </div>
+          </Panel>
+
           <Panel title="Filters">
             <div className="p-4">
               <p className="mb-2 text-sm font-bold">District</p>
@@ -497,13 +516,13 @@ function DashboardScreen(props) {
                   onClick={() => selectHydrant(hydrant)}
                   className={`grid w-full grid-cols-[34px_1fr_auto] items-center gap-3 border-b border-slate-200 px-4 py-3 text-left hover:bg-red-50 ${form.hydrant_id === hydrant.hydrant_id ? "bg-red-50 ring-1 ring-inset ring-red-500" : "bg-white"}`}
                 >
-                  <Droplets className="h-6 w-6 text-red-700" />
+                  <Droplets className="h-6 w-6" style={{ color: getHydrantStyle(hydrant).color }} />
                   <span className="min-w-0">
                     <span className="block font-black">{hydrant.hydrant_id || hydrant.location_id || "No ID"}</span>
                     <span className="block truncate text-xs font-bold text-slate-700">{hydrant.location || hydrant.address || "No location"}</span>
                     <span className="block text-xs text-slate-500">District {hydrant.district || "-"}</span>
                   </span>
-                  <span className={`rounded px-2 py-1 text-[11px] font-black ${hydrant.status === "Out of Service" ? "bg-orange-100 text-orange-700" : "bg-green-100 text-green-700"}`}>
+                  <span className={`rounded px-2 py-1 text-[11px] font-black ${hydrant.status === "Out of Service" ? "bg-slate-950 text-white" : "bg-green-100 text-green-700"}`}>
                     {hydrant.status || "In Service"}
                   </span>
                   <ChevronRight className="h-4 w-4 text-slate-500" />
@@ -655,7 +674,7 @@ function FlowTestScreen({ flow, form, handleHydrantIdInput, saveHydrant, saveTes
             <p className="text-sm font-bold">NFPA Color Standard</p>
             <Select value={nfpaClass} onChange={(value) => updateForm("nfpa_class", value)} options={nfpaClasses.map((item) => item.label)} />
             <div className="mt-3 grid grid-cols-2 gap-2">
-              {nfpaClasses.map((item) => (
+              {[...nfpaClasses, { label: "Out of Service", range: "Unavailable", color: "#111827", text: "Black" }, { label: "Not Tested", range: "No flow result", color: "#64748b", text: "Gray" }].map((item) => (
                 <div key={item.label} className="rounded border border-slate-200 p-2 text-xs font-bold">
                   <span className="mr-2 inline-block h-3 w-3 rounded-full" style={{ backgroundColor: item.color }} />
                   {item.label}: {item.range}
@@ -664,8 +683,6 @@ function FlowTestScreen({ flow, form, handleHydrantIdInput, saveHydrant, saveTes
             </div>
           </div>
           <Select label="Status" value={form.status} onChange={(value) => updateForm("status", value)} options={["In Service", "Out of Service"]} />
-          <Field label="Tested By" value={form.tested_by} onChange={(value) => updateForm("tested_by", value)} />
-          <Select label="Shift" value={form.shift} onChange={(value) => updateForm("shift", value)} options={["A", "B", "C"]} />
           <Field label="Date / Time" type="datetime-local" value={form.tested_at} onChange={(value) => updateForm("tested_at", value)} />
           <label className="grid gap-2 lg:col-span-4">
             <span className="text-sm font-bold">Notes</span>
@@ -683,7 +700,7 @@ function FlowTestScreen({ flow, form, handleHydrantIdInput, saveHydrant, saveTes
   );
 }
 
-function InspectionScreen({ form, inspectionRows, updateForm, updateInspectionRow, saveInspection, saveHydrant }) {
+function InspectionScreen({ form, crew, inspectionRows, updateForm, updateInspectionRow, saveInspection, saveHydrant }) {
   const handlePhotoUpload = async (index, file) => {
     if (!file) return;
     const photo = await fileToDataUrl(file);
@@ -699,9 +716,11 @@ function InspectionScreen({ form, inspectionRows, updateForm, updateInspectionRo
     <div className="bg-[#071019] p-5 text-white">
       <div className="mb-4 rounded-md border border-white/10 bg-white/5 p-4">
         <div className="grid gap-4 lg:grid-cols-4">
+          <div className="rounded-md border border-white/10 bg-black/20 px-3 py-2 lg:col-span-2">
+            <p className="text-xs font-black uppercase text-white/60">Crew</p>
+            <p className="mt-1 text-sm font-bold">{crew.tested_by || "Field User"} - {crew.shift || "A"} Shift</p>
+          </div>
           <Field dark label="Inspection Date / Time" type="datetime-local" value={form.tested_at} onChange={(value) => updateForm("tested_at", value)} icon={CalendarDays} />
-          <Select dark label="Inspector / Tested By" value={form.tested_by} onChange={(value) => updateForm("tested_by", value)} options={[form.tested_by || "Field User", "John Smith"]} icon={BriefcaseBusiness} />
-          <Select dark label="Shift" value={form.shift} onChange={(value) => updateForm("shift", value)} options={["A", "B", "C"]} />
           <Select dark label="District" value={form.district} onChange={(value) => updateForm("district", value)} options={["1", "2", "3"]} />
           <Select dark label="Status" value={form.status} onChange={(value) => updateForm("status", value)} options={["In Service", "Out of Service"]} />
           <Field dark label="Weather Conditions" value="72F  Partly Cloudy" onChange={() => {}} />
@@ -849,7 +868,7 @@ function AerialHydrantMap({ hydrants, selectedHydrant, selectHydrant, setScreen 
       )}
       {mappedHydrants.map((hydrant) => {
         const position = getHydrantPosition(hydrant);
-        const nfpa = getNfpaClass(hydrant.flow_gpm);
+        const nfpa = getHydrantStyle(hydrant);
         const isSelected = (selectedHydrant?.hydrant_id || selectedHydrant?.location_id) === (hydrant.hydrant_id || hydrant.location_id);
 
         return (
@@ -859,7 +878,7 @@ function AerialHydrantMap({ hydrants, selectedHydrant, selectHydrant, setScreen 
             radius={isSelected ? 10 : 7}
             pathOptions={{
               color: "#ffffff",
-              fillColor: hydrant.status === "Out of Service" ? "#f97316" : nfpa.color,
+              fillColor: nfpa.color,
               fillOpacity: 0.92,
               weight: isSelected ? 3 : 1.5,
             }}
@@ -923,7 +942,7 @@ function MapAutoFrame({ hydrants, selectedHydrant, userLocation }) {
 }
 
 function QuickHydrantCard({ hydrant, selectedPosition, setScreen }) {
-  const nfpa = getNfpaClass(hydrant?.flow_gpm);
+  const nfpa = getHydrantStyle(hydrant);
 
   return (
     <Panel title="Selected Hydrant">
@@ -953,7 +972,7 @@ function QuickHydrantCard({ hydrant, selectedPosition, setScreen }) {
 }
 
 function HydrantQuickRow({ hydrant, onClick }) {
-  const nfpa = getNfpaClass(hydrant.flow_gpm);
+  const nfpa = getHydrantStyle(hydrant);
 
   return (
     <button type="button" onClick={onClick} className="grid w-full grid-cols-[auto_1fr_auto] items-center gap-3 border-b border-slate-200 px-4 py-3 text-left hover:bg-red-50">
