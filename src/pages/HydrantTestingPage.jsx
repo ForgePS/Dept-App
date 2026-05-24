@@ -546,7 +546,7 @@ function DashboardScreen(props) {
           </Panel>
         </div>
 
-        <div className="grid gap-4">
+        <div className="grid min-h-[720px] gap-4 xl:grid-rows-[minmax(0,1fr)_auto]">
           <AerialPanel
             hydrants={visibleHydrants}
             selectedHydrant={form}
@@ -639,11 +639,15 @@ function HydrantMapScreen({ hydrants, mappedHydrants, query, selectedHydrant, se
 
 function AerialPanel({ hydrants, selectedHydrant, selectHydrant, setScreen }) {
   return (
-    <Panel title="Aerial View" subtitle="Satellite map with hydrant overlays and quick action popups.">
-      <div className="h-[420px]">
+    <section className="flex h-full min-h-[520px] flex-col overflow-hidden rounded-md border border-slate-200 bg-white shadow-[0_5px_18px_rgba(15,23,42,0.12)]">
+      <div className="border-b border-red-200 px-4 py-3">
+        <h2 className="font-black uppercase text-red-700">Aerial View</h2>
+        <p className="text-sm font-semibold text-slate-500">Satellite map with hydrant overlays and quick action popups.</p>
+      </div>
+      <div className="min-h-[420px] flex-1">
         <AerialHydrantMap hydrants={hydrants} selectedHydrant={selectedHydrant} selectHydrant={selectHydrant} setScreen={setScreen} />
       </div>
-    </Panel>
+    </section>
   );
 }
 
