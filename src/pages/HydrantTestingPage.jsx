@@ -36,7 +36,36 @@ const navItems = [
   { key: "settings", label: "Settings", icon: Settings },
 ];
 
-const crewUserOptions = ["", "Field User", "John Smith", "Jeremy Powell"];
+const crewUserOptions = [
+  "",
+  "Adam Tutor",
+  "Billy White",
+  "Blake Turnmire",
+  "Brandon Jefferies",
+  "Clay Willingham",
+  "Cole Casey",
+  "Cory Hill",
+  "Gregory Scruggs",
+  "Jay Mitchell",
+  "Jay Wade",
+  "Jeff Tidwell",
+  "Jeremy Johnson",
+  "Jeremy Powell",
+  "John Paul Lavender",
+  "Joseph Gardner",
+  "Justin Correro",
+  "Lee Chillis",
+  "Mike Mallett",
+  "Paul Destefanis",
+  "Shane Headley",
+  "Stephen White",
+  "Steven Whitten",
+  "Timothy Jones",
+  "Troy Vest",
+  "Tyler Lee",
+  "William Sigurdson",
+  "William Sisk",
+];
 
 const checklistItems = [
   ["No Obstructions", "Area clear and accessible."],
