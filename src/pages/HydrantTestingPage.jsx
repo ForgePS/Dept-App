@@ -120,7 +120,7 @@ export default function HydrantTestingPage() {
   const [hydrants, setHydrants] = useState([]);
   const [tests, setTests] = useState([]);
   const [inspections, setInspections] = useState([]);
-  const [district, setDistrict] = useState("All");
+  const [selectedDistricts, setSelectedDistricts] = useState(["1", "2", "3"]);
   const [status, setStatus] = useState("All");
   const [query, setQuery] = useState("");
   const [selectedHydrant, setSelectedHydrant] = useState(null);
@@ -146,11 +146,20 @@ export default function HydrantTestingPage() {
     const q = query.trim().toLowerCase();
     return hydrants.filter((hydrant) => {
       const text = `${hydrant.hydrant_id} ${hydrant.location_id} ${hydrant.location} ${hydrant.address} ${hydrant.provider}`.toLowerCase();
-      return (district === "All" || hydrant.district === district) &&
+      return selectedDistricts.includes(String(hydrant.district || "")) &&
         (status === "All" || hydrant.status === status) &&
         (!q || text.includes(q));
     });
-  }, [district, hydrants, query, status]);
+  }, [hydrants, query, selectedDistricts, status]);
+
+  const toggleDistrict = (districtValue) => {
+    setSelectedDistricts((current) => {
+      if (districtValue === "All") return current.length === 3 ? [] : ["1", "2", "3"];
+      return current.includes(districtValue)
+        ? current.filter((item) => item !== districtValue)
+        : [...current, districtValue].sort();
+    });
+  };
 
   const loadAll = async () => {
     const [hydrantsData, testsData, inspectionsData] = await Promise.all([
@@ -343,7 +352,6 @@ export default function HydrantTestingPage() {
             />
           ) : (
             <DashboardScreen
-              district={district}
               form={form}
               flow={flow}
               hydrants={hydrants}
@@ -353,13 +361,14 @@ export default function HydrantTestingPage() {
               screen={screen}
               handleHydrantIdInput={handleHydrantIdInput}
               selectHydrant={selectHydrant}
-              setDistrict={setDistrict}
               setQuery={setQuery}
               setScreen={setScreen}
+              selectedDistricts={selectedDistricts}
               setStatus={setStatus}
               stats={stats}
               status={status}
               tests={tests}
+              toggleDistrict={toggleDistrict}
               inspections={inspections}
               mappedHydrants={mappedHydrants}
               updateForm={updateForm}
@@ -374,7 +383,6 @@ export default function HydrantTestingPage() {
 
 function DashboardScreen(props) {
   const {
-    district,
     form,
     flow,
     hydrants,
@@ -384,13 +392,14 @@ function DashboardScreen(props) {
     screen,
     handleHydrantIdInput,
     selectHydrant,
-    setDistrict,
     setQuery,
     setScreen,
+    selectedDistricts,
     setStatus,
     stats,
     status,
     tests,
+    toggleDistrict,
     inspections,
     mappedHydrants,
     updateForm,
@@ -430,10 +439,12 @@ function DashboardScreen(props) {
         mappedHydrants={mappedHydrants}
         query={query}
         selectedHydrant={form}
+        selectedDistricts={selectedDistricts}
         selectHydrant={selectHydrant}
         setQuery={setQuery}
         setScreen={setScreen}
         stats={stats}
+        toggleDistrict={toggleDistrict}
       />
     );
   }
@@ -466,13 +477,7 @@ function DashboardScreen(props) {
           <Panel title="Filters">
             <div className="p-4">
               <p className="mb-2 text-sm font-bold">District</p>
-              <div className="grid grid-cols-4 overflow-hidden rounded-md border border-slate-300">
-                {["All", "1", "2", "3"].map((item) => (
-                  <button key={item} type="button" onClick={() => setDistrict(item)} className={`h-10 border-r border-slate-300 text-sm font-black last:border-r-0 ${district === item ? "bg-red-700 text-white" : "bg-white"}`}>
-                    {item}
-                  </button>
-                ))}
-              </div>
+              <DistrictVisibilityButtons selectedDistricts={selectedDistricts} toggleDistrict={toggleDistrict} />
               <p className="mb-2 mt-4 text-sm font-bold">Status</p>
               <Select value={status} onChange={(value) => setStatus(value)} options={["All", "In Service", "Out of Service"]} />
               <p className="mb-2 mt-4 text-sm font-bold">Search Hydrant ID</p>
@@ -524,8 +529,37 @@ function DashboardScreen(props) {
   );
 }
 
-function HydrantMapScreen({ hydrants, mappedHydrants, query, selectedHydrant, selectHydrant, setQuery, setScreen, stats }) {
+function DistrictVisibilityButtons({ selectedDistricts, toggleDistrict }) {
+  const allSelected = selectedDistricts.length === 3;
+
+  return (
+    <div className="grid grid-cols-4 overflow-hidden rounded-md border border-slate-300">
+      {["All", "1", "2", "3"].map((item) => {
+        const isSelected = item === "All" ? allSelected : selectedDistricts.includes(item);
+        const label = item === "All" ? "All" : `D${item}`;
+
+        return (
+          <button
+            key={item}
+            type="button"
+            onClick={() => toggleDistrict(item)}
+            className={`h-10 border-r border-slate-300 text-sm font-black last:border-r-0 ${isSelected ? "bg-red-700 text-white" : "bg-white text-slate-800"}`}
+            aria-pressed={isSelected}
+            title={item === "All" ? "Show or hide all districts" : `Show or hide District ${item}`}
+          >
+            {label}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+function HydrantMapScreen({ hydrants, mappedHydrants, query, selectedHydrant, selectedDistricts, selectHydrant, setQuery, setScreen, stats, toggleDistrict }) {
   const selectedPosition = getHydrantPosition(selectedHydrant);
+  const visibleMappedHydrants = hydrants.filter((hydrant) => getHydrantPosition(hydrant));
+  const visibleInService = hydrants.filter((hydrant) => hydrant.status !== "Out of Service").length;
+  const visibleOutService = hydrants.filter((hydrant) => hydrant.status === "Out of Service").length;
 
   return (
     <div className="grid min-h-[calc(100vh-114px)] gap-5 p-5 xl:grid-cols-[minmax(0,1fr)_360px]">
@@ -533,11 +567,16 @@ function HydrantMapScreen({ hydrants, mappedHydrants, query, selectedHydrant, se
         <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 px-4 py-3">
           <div>
             <h2 className="font-black uppercase text-red-700">Aerial Hydrant Map</h2>
-            <p className="text-sm font-semibold text-slate-500">{mappedHydrants.length.toLocaleString()} mapped city hydrants</p>
+            <p className="text-sm font-semibold text-slate-500">{visibleMappedHydrants.length.toLocaleString()} visible of {mappedHydrants.length.toLocaleString()} mapped city hydrants</p>
           </div>
-          <div className="relative w-full sm:w-80">
-            <input value={query} onChange={(event) => setQuery(event.target.value)} className="hydrant-input pr-10" placeholder="Search hydrant ID" />
-            <Search className="absolute right-3 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-500" />
+          <div className="flex w-full flex-wrap items-center gap-3 lg:w-auto">
+            <div className="w-full sm:w-[320px]">
+              <DistrictVisibilityButtons selectedDistricts={selectedDistricts} toggleDistrict={toggleDistrict} />
+            </div>
+            <div className="relative w-full sm:w-80">
+              <input value={query} onChange={(event) => setQuery(event.target.value)} className="hydrant-input pr-10" placeholder="Search hydrant ID" />
+              <Search className="absolute right-3 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-500" />
+            </div>
           </div>
         </div>
         <div className="min-h-[560px] flex-1">
@@ -548,9 +587,9 @@ function HydrantMapScreen({ hydrants, mappedHydrants, query, selectedHydrant, se
       <aside className="grid min-h-[640px] content-start gap-4">
         <div className="grid grid-cols-2 gap-3">
           <MiniMetric label="Total" value={stats.total} />
-          <MiniMetric label="Mapped" value={mappedHydrants.length} />
-          <MiniMetric label="In Service" value={stats.inService} />
-          <MiniMetric label="OOS" value={stats.outService} />
+          <MiniMetric label="Visible" value={hydrants.length} />
+          <MiniMetric label="In Service" value={visibleInService} />
+          <MiniMetric label="OOS" value={visibleOutService} />
         </div>
 
         <QuickHydrantCard hydrant={selectedHydrant} selectedPosition={selectedPosition} setScreen={setScreen} />
