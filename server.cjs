@@ -28,6 +28,12 @@ const DISTRICT_BOUNDARIES = {
   hurtRoadLon: -90.035423,
 };
 
+const REMOVED_HYDRANT_IDS = new Set(["31467973"]);
+const MANUAL_DISTRICT_3_HYDRANT_IDS = new Set([
+  "31469169", "31469154", "31468989", "31468987", "31468986", "31468991", "31468980", "31468982", "31468979", "31468961", "31468959", "31468958", "31468960", "31468953", "31468954", "31468952", "31468945", "31468948", "31468944", "31469040", "31468909", "31468910", "31468908", "31468907", "31469034", "31469033", "31469032",
+  "31469153", "31468906", "31468891", "31468890", "31468889", "31468888", "31468887", "31468886",
+]);
+
 app.use(express.json({ limit: "50mb" }));
 app.use(express.urlencoded({ extended: true, limit: "50mb" }));
 
@@ -63,11 +69,54 @@ function safeParseArray(value) {
   }
 }
 
+function hydrantIds(hydrant = {}) {
+  return [clean(hydrant.location_id), clean(hydrant.hydrant_id)].filter(Boolean);
+}
+
+function hasHydrantId(hydrant, ids) {
+  return hydrantIds(hydrant).some((id) => ids.has(id));
+}
+
+function applyManualHydrantCorrections(hydrants) {
+  let changed = false;
+  const corrected = [];
+
+  for (const hydrant of hydrants) {
+    if (hasHydrantId(hydrant, REMOVED_HYDRANT_IDS)) {
+      changed = true;
+      continue;
+    }
+
+    if (hasHydrantId(hydrant, MANUAL_DISTRICT_3_HYDRANT_IDS)) {
+      const nextHydrant = {
+        ...hydrant,
+        district: "3",
+        district_source: "Manual",
+      };
+      if (hydrant.district !== "3" || hydrant.district_source !== "Manual") changed = true;
+      corrected.push(nextHydrant);
+      continue;
+    }
+
+    corrected.push(hydrant);
+  }
+
+  return { hydrants: corrected, changed };
+}
+
 function readJson(file) {
   ensureFiles();
   try {
     const parsed = JSON.parse(fs.readFileSync(file, "utf8"));
-    return Array.isArray(parsed) ? parsed : [];
+    if (!Array.isArray(parsed)) return [];
+
+    if (file === files.hydrants) {
+      const { hydrants, changed } = applyManualHydrantCorrections(parsed);
+      if (changed) fs.writeFileSync(file, JSON.stringify(hydrants, null, 2), "utf8");
+      return hydrants;
+    }
+
+    return parsed;
   } catch {
     return [];
   }
@@ -75,7 +124,8 @@ function readJson(file) {
 
 function writeJson(file, value) {
   ensureFiles();
-  fs.writeFileSync(file, JSON.stringify(value, null, 2), "utf8");
+  const nextValue = file === files.hydrants ? applyManualHydrantCorrections(value).hydrants : value;
+  fs.writeFileSync(file, JSON.stringify(nextValue, null, 2), "utf8");
 }
 
 function numberOrBlank(value) {
@@ -145,8 +195,40 @@ function hydrantKey(hydrant) {
   return clean(hydrant.location_id || hydrant.hydrant_id);
 }
 
+function sameHydrantCoordinates(a = {}, b = {}) {
+  const aLat = clean(a.latitude || a.lat);
+  const aLon = clean(a.longitude || a.lon || a.lng);
+  const bLat = clean(b.latitude || b.lat);
+  const bLon = clean(b.longitude || b.lon || b.lng);
+  return aLat && aLon && aLat === bLat && aLon === bLon;
+}
+
 function findHydrantIndex(hydrants, id) {
   return hydrants.findIndex((hydrant) => hydrantKey(hydrant) === id || clean(hydrant.hydrant_id) === id);
+}
+
+function findHydrantIndexForUpdate(hydrants, input, normalizedHydrant) {
+  const lookupKeys = [
+    hydrantKey(normalizedHydrant),
+    clean(input.original_location_id),
+    clean(input.original_hydrant_id),
+  ].filter(Boolean);
+
+  for (const key of lookupKeys) {
+    const index = findHydrantIndex(hydrants, key);
+    if (index >= 0) return index;
+  }
+
+  return hydrants.findIndex((hydrant) => sameHydrantCoordinates(hydrant, input));
+}
+
+function mergeHydrant(existing, incoming) {
+  return {
+    ...existing,
+    ...incoming,
+    location_id: incoming.location_id || existing.location_id,
+    hydrant_id: incoming.hydrant_id || existing.hydrant_id,
+  };
 }
 
 function migrateHydrantDistricts() {
@@ -170,7 +252,9 @@ function migrateHydrantDistricts() {
     };
   });
 
-  if (changed) writeJson(files.hydrants, updated);
+  const manualCorrections = applyManualHydrantCorrections(updated);
+  if (manualCorrections.changed) changed = true;
+  if (changed) writeJson(files.hydrants, manualCorrections.hydrants);
 }
 
 app.get("/api/health", (req, res) => {
@@ -198,16 +282,23 @@ app.post("/api/hydrants", (req, res) => {
   const hydrant = normalizeHydrant(req.body);
   const key = hydrantKey(hydrant);
 
-  if (!key) {
+  if (!key && !clean(req.body.original_location_id) && !clean(req.body.original_hydrant_id)) {
     return res.status(400).json({ ok: false, error: "Hydrant ID or Location ID is required." });
   }
 
-  const index = findHydrantIndex(hydrants, key);
-  if (index >= 0) hydrants[index] = { ...hydrants[index], ...hydrant };
-  else hydrants.unshift(hydrant);
+  const index = findHydrantIndexForUpdate(hydrants, req.body, hydrant);
+  let savedHydrant;
+
+  if (index >= 0) {
+    savedHydrant = mergeHydrant(hydrants[index], hydrant);
+    hydrants[index] = savedHydrant;
+  } else {
+    savedHydrant = hydrant;
+    hydrants.unshift(savedHydrant);
+  }
 
   writeJson(files.hydrants, hydrants);
-  res.json({ ok: true, hydrant });
+  res.json({ ok: true, hydrant: savedHydrant });
 });
 
 app.post("/api/hydrants/import", upload.single("file"), (req, res) => {
@@ -233,7 +324,7 @@ app.post("/api/hydrants/import", upload.single("file"), (req, res) => {
 
   const hydrants = Array.from(byKey.values());
   writeJson(files.hydrants, hydrants);
-  res.json({ ok: true, imported, total: hydrants.length });
+  res.json({ ok: true, imported, total: readJson(files.hydrants).length });
 });
 
 app.get("/api/hydrants/export", (req, res) => {
