@@ -24,8 +24,8 @@ const seedFiles = {
 const upload = multer({ storage: multer.memoryStorage() });
 
 const DISTRICT_BOUNDARIES = {
-  hornLakeRoadLon: -90.045,
-  hurtRoadLon: -90.025,
+  hornLakeRoadLon: -90.0626,
+  hurtRoadLon: -90.035423,
 };
 
 app.use(express.json({ limit: "50mb" }));
@@ -111,11 +111,14 @@ function normalizeHydrant(input = {}) {
   const dischargeSize = numberOrBlank(input.discharge_size ?? input["Discharge Size"]);
   const pitotPsi = numberOrBlank(input.pitot_psi ?? input["Pitot psi"]);
   const flow = calcFlowGpm(dischargeSize, pitotPsi);
+  const explicitDistrict = clean(input.district ?? input.District);
+  const assignedDistrict = assignHydrantDistrict(input);
 
   return {
     location_id: clean(input.location_id ?? input["Location ID"]),
     hydrant_id: clean(input.hydrant_id ?? input["Hydrant ID"] ?? input.id),
-    district: assignHydrantDistrict(input),
+    district: explicitDistrict || assignedDistrict,
+    district_source: explicitDistrict ? "Manual" : "Road boundary assignment",
     location: clean(input.location ?? input.address ?? input.Location ?? input.Address),
     address: clean(input.address ?? input.location ?? input.Address ?? input.Location),
     description: clean(input.description ?? input.Description),
@@ -153,7 +156,12 @@ function migrateHydrantDistricts() {
 
   const updated = hydrants.map((hydrant) => {
     const district = assignHydrantDistrict(hydrant);
-    if (!district || hydrant.district === district) return hydrant;
+    const shouldAutoUpdate =
+      !clean(hydrant.district) ||
+      !clean(hydrant.district_source) ||
+      hydrant.district_source === "Road boundary assignment";
+
+    if (!district || !shouldAutoUpdate || hydrant.district === district) return hydrant;
     changed = true;
     return {
       ...hydrant,
