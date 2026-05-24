@@ -29,7 +29,6 @@ import {
 
 const navItems = [
   { key: "dashboard", label: "Dashboard", icon: Home },
-  { key: "map", label: "Map", icon: MapPin },
   { key: "hydrants", label: "Hydrants", icon: Droplets },
   { key: "flow", label: "Flow Tests", icon: Gauge },
   { key: "inspection", label: "Inspections", icon: ClipboardList },
