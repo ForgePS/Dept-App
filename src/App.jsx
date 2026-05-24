@@ -13,6 +13,7 @@ import EmsProtocolsPage from './pages/EmsProtocolsPage';
 import ImportantNumbers from './pages/ImportantNumbers';
 import InspectionDivision from './pages/InspectionDivision';
 import PlaceholderPage from './pages/PlaceholderPage';
+import HydrantTestingPage from './pages/HydrantTestingPage';
 
 function App() {
   return (
@@ -24,6 +25,7 @@ function App() {
             <Route path="/ems-forms" element={<EmsFormsPage />} />
             <Route path="/ems-forms/protocols" element={<EmsProtocolsPage />} />
             <Route path="/fire-forms" element={<FireFormsPage />} />
+            <Route path="/hydrant-testing" element={<HydrantTestingPage />} />
             <Route path="/inspection-division" element={<InspectionDivision />} />
             <Route path="/inspection-division/fire-inspection-form" element={<FireInspectionFormPage />} />
             <Route path="/inspection-division/burn-permit" element={<PlaceholderPage title="Burn Permit" backTo="/inspection-division" />} />

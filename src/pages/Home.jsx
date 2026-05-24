@@ -1,4 +1,4 @@
-import { Stethoscope, Flame, ClipboardCheck, Search, Phone, ShieldCheck, Clock3, MapPin } from "lucide-react";
+import { Stethoscope, Flame, ClipboardCheck, Search, Phone, ShieldCheck, Clock3, MapPin, Droplets } from "lucide-react";
 import { motion } from "framer-motion";
 import DashboardCard from "../components/DashboardCard";
 
@@ -35,6 +35,14 @@ export default function Home() {
     to: "/investigation-division",
     color: "bg-slate-950",
     action: "Review"
+  },
+  {
+    title: "Hydrant Testing",
+    description: "Hydrant records, flow testing, inspections, and CSV import/export.",
+    icon: Droplets,
+    to: "/hydrant-testing",
+    color: "bg-blue-700",
+    action: "Open"
   },
   {
     title: "Important Numbers",

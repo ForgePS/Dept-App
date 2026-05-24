@@ -126,4 +126,32 @@
       linear-gradient(90deg, hsl(0 0% 100% / 0.08) 1px, transparent 1px);
     background-size: auto, auto, 28px 28px;
   }
+
+  .field {
+    @apply min-h-11 w-full rounded-xl border border-border bg-background px-3 text-sm font-semibold text-foreground shadow-sm outline-none transition-colors placeholder:text-muted-foreground focus:border-accent focus:ring-2 focus:ring-accent/20 disabled:cursor-not-allowed disabled:opacity-60;
+  }
+
+  .primary-button {
+    @apply inline-flex min-h-11 items-center justify-center rounded-xl bg-accent px-5 text-sm font-black uppercase tracking-wide text-white shadow-sm transition-colors hover:bg-red-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 disabled:cursor-not-allowed disabled:opacity-60;
+  }
+
+  .icon-button {
+    @apply grid h-10 w-10 place-items-center rounded-xl border border-border/70 bg-card text-foreground shadow-sm transition-colors hover:border-accent/50 hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40;
+  }
+
+  .top-icon {
+    @apply grid h-10 w-10 place-items-center rounded-md text-white transition-colors hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50;
+  }
+
+  .hydrant-input {
+    @apply min-h-12 w-full rounded-md border border-slate-300 bg-white px-3 text-base font-medium text-slate-950 outline-none transition-colors placeholder:text-slate-400 focus:border-red-600 focus:ring-2 focus:ring-red-600/15;
+  }
+
+  .dark-input {
+    @apply min-h-11 w-full rounded-md border border-white/20 bg-black/15 px-3 text-base font-medium text-white outline-none transition-colors placeholder:text-white/45 focus:border-red-500 focus:ring-2 focus:ring-red-600/25;
+  }
+
+  .dark-input option {
+    @apply bg-slate-950 text-white;
+  }
 }
