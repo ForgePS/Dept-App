@@ -528,7 +528,7 @@ function DashboardScreen(props) {
         <div className="grid gap-4">
           <Panel title="Crew">
             <div className="grid gap-4 p-4">
-              <Select label="User" value={crew.tested_by} onChange={(value) => updateCrew("tested_by", value)} options={crewUserOptions} />
+              <TestedBySearch value={crew.tested_by} onChange={(value) => updateCrew("tested_by", value)} />
               <Select label="Shift" value={crew.shift} onChange={(value) => updateCrew("shift", value)} options={["A", "B", "C"]} />
               <Field label="Date / Time" type="datetime-local" value={crew.tested_at} onChange={(value) => updateCrew("tested_at", value)} icon={CalendarDays} />
             </div>
@@ -1047,6 +1047,31 @@ function NfpaStandardsPanel() {
         ))}
       </div>
     </Panel>
+  );
+}
+
+function TestedBySearch({ value, onChange }) {
+  const listId = "tested-by-options";
+
+  return (
+    <label className="grid gap-2">
+      <span className="text-sm font-bold text-slate-950">User</span>
+      <span className="relative">
+        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
+        <input
+          type="search"
+          list={listId}
+          value={value || ""}
+          onChange={(event) => onChange(event.target.value)}
+          className="hydrant-input pl-9"
+          placeholder="Start typing a name"
+          autoComplete="off"
+        />
+        <datalist id={listId}>
+          {crewUserOptions.filter(Boolean).map((name) => <option key={name} value={name} />)}
+        </datalist>
+      </span>
+    </label>
   );
 }
 
