@@ -362,6 +362,7 @@ export default function HydrantTestingPage() {
             <InspectionScreen
               form={form}
               crew={crew}
+              handleHydrantIdInput={handleHydrantIdInput}
               inspectionRows={inspectionRows}
               saveHydrant={saveHydrant}
               updateForm={updateForm}
@@ -500,7 +501,7 @@ function DashboardScreen(props) {
             <div className="grid gap-4 p-4">
               <Select label="User" value={crew.tested_by} onChange={(value) => updateCrew("tested_by", value)} options={crewUserOptions} />
               <Select label="Shift" value={crew.shift} onChange={(value) => updateCrew("shift", value)} options={["A", "B", "C"]} />
-              <Field label="Date / Time" type="datetime-local" value={crew.tested_at} onChange={(value) => updateCrew("tested_at", value)} />
+              <Field label="Date / Time" type="datetime-local" value={crew.tested_at} onChange={(value) => updateCrew("tested_at", value)} icon={CalendarDays} />
             </div>
           </Panel>
 
@@ -710,7 +711,7 @@ function FlowTestScreen({ flow, form, handleHydrantIdInput, saveHydrant, saveTes
   );
 }
 
-function InspectionScreen({ form, crew, inspectionRows, updateForm, updateInspectionRow, saveInspection, saveHydrant }) {
+function InspectionScreen({ form, crew, handleHydrantIdInput, inspectionRows, updateForm, updateInspectionRow, saveInspection, saveHydrant }) {
   const handlePhotoUpload = async (index, file) => {
     if (!file) return;
     const photo = await fileToDataUrl(file);
@@ -731,6 +732,7 @@ function InspectionScreen({ form, crew, inspectionRows, updateForm, updateInspec
             <p className="mt-1 text-sm font-bold">{crew.tested_by || "Field User"} - {crew.shift || "A"} Shift</p>
             <p className="mt-1 text-xs font-semibold text-white/70">{crew.tested_at ? new Date(crew.tested_at).toLocaleString() : "No date selected"}</p>
           </div>
+          <Field dark label="Hydrant ID" value={form.hydrant_id || form.location_id || ""} onChange={handleHydrantIdInput} icon={Droplets} />
           <Select dark label="District" value={form.district} onChange={(value) => updateForm("district", value)} options={["1", "2", "3"]} />
           <Select dark label="Status" value={form.status} onChange={(value) => updateForm("status", value)} options={["In Service", "Out of Service"]} />
           <Field dark label="Weather Conditions" value="72F  Partly Cloudy" onChange={() => {}} />
@@ -838,7 +840,7 @@ function MiniMetric({ label, value }) {
 function AerialHydrantMap({ hydrants, selectedHydrant, selectHydrant, setScreen }) {
   const [userLocation, setUserLocation] = useState(null);
   const mappedHydrants = hydrants.filter((hydrant) => getHydrantPosition(hydrant));
-  const selectedPosition = userLocation || getHydrantPosition(selectedHydrant) || getHydrantPosition(mappedHydrants[0]) || [34.955, -90.034];
+  const cityCenter = [34.955, -90.055];
 
   useEffect(() => {
     if (!navigator.geolocation) return undefined;
@@ -855,7 +857,7 @@ function AerialHydrantMap({ hydrants, selectedHydrant, selectHydrant, setScreen 
   }, []);
 
   return (
-    <MapContainer center={selectedPosition} zoom={15} className="h-full w-full" scrollWheelZoom>
+    <MapContainer center={cityCenter} zoom={12} className="h-full w-full" scrollWheelZoom>
       <TileLayer
         attribution="Tiles &copy; Esri"
         url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
@@ -926,26 +928,18 @@ function AerialHydrantMap({ hydrants, selectedHydrant, selectHydrant, setScreen 
 
 function MapAutoFrame({ hydrants, selectedHydrant, userLocation }) {
   const map = useMap();
-  const centeredOnUser = useRef(false);
 
   useEffect(() => {
-    if (userLocation && !centeredOnUser.current) {
-      map.setView(userLocation, 17, { animate: true });
-      centeredOnUser.current = true;
+    const positions = hydrants.map(getHydrantPosition).filter(Boolean).slice(0, 1000);
+    if (userLocation) positions.push(userLocation);
+
+    if (!positions.length) {
+      map.setView([34.955, -90.055], 12, { animate: true });
       return;
     }
-
-    const selectedPosition = getHydrantPosition(selectedHydrant);
-    if (selectedPosition) {
-      map.setView(selectedPosition, 17, { animate: true });
-      return;
-    }
-
-    const positions = hydrants.map(getHydrantPosition).filter(Boolean).slice(0, 500);
-    if (!positions.length) return;
 
     const bounds = positions.reduce((acc, position) => acc.extend(position), L.latLngBounds(positions[0], positions[0]));
-    map.fitBounds(bounds, { padding: [24, 24], maxZoom: 15 });
+    map.fitBounds(bounds, { padding: [36, 36], maxZoom: 13 });
   }, [hydrants, map, selectedHydrant, userLocation]);
 
   return null;
