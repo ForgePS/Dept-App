@@ -1,0 +1,145 @@
+const fs = require('fs');
+const file = 'src/pages/HydrantTestingPage.jsx';
+let src = fs.readFileSync(file, 'utf8');
+
+const replace = (from, to, label) => {
+  if (!src.includes(from)) throw new Error(`Missing pattern: ${label}`);
+  src = src.replace(from, to);
+};
+
+src = src.replace('  BriefcaseBusiness,\n', '');
+src = src
+  .replace('  ["Tag Attached & Readable", "Tag attached and readable."],\n', '')
+  .replace('  ["Paint / Reflective Visible", "Paint good, reflector visible."],\n', '')
+  .replace('  ["Accessible (Not Blocked)", "Clear access."],\n', '');
+
+replace(`const getNfpaClass = (flowGpm) => {
+  const flowValue = Number(flowGpm || 0);
+  return nfpaClasses.find((item) => flowValue >= item.min) || nfpaClasses[nfpaClasses.length - 1];
+};`, `const getNfpaClass = (flowGpm) => {
+  const flowValue = Number(flowGpm || 0);
+  return nfpaClasses.find((item) => flowValue >= item.min) || nfpaClasses[nfpaClasses.length - 1];
+};
+
+const getHydrantStyle = (hydrant = {}) => {
+  if (hydrant?.status === "Out of Service") return { label: "Out of Service", range: "Out of service", min: 0, color: "#111827", text: "Black" };
+  const flowValue = Number(hydrant?.flow_gpm || 0);
+  if (!Number.isFinite(flowValue) || flowValue <= 0) return { label: "Not Tested", range: "No flow result", min: 0, color: "#64748b", text: "Gray" };
+  return getNfpaClass(flowValue);
+};`, 'add hydrant style helper');
+
+replace(`  const [selectedHydrant, setSelectedHydrant] = useState(null);
+  const [form, setForm] = useState({ ...emptyHydrant, tested_at: todayInput() });`, `  const [selectedHydrant, setSelectedHydrant] = useState(null);
+  const [crew, setCrew] = useState({ tested_by: "", shift: "A" });
+  const [form, setForm] = useState({ ...emptyHydrant, tested_at: todayInput() });`, 'add crew state');
+
+replace(`    setInspections(inspectionsData.inspections || []);
+
+    if (!selectedHydrant && hydrantsData.hydrants?.[0]) {
+      selectHydrant(hydrantsData.hydrants[0]);
+    }
+  };`, `    setInspections(inspectionsData.inspections || []);
+  };`, 'remove startup preselect');
+
+replace(`      tested_by: hydrant.tested_by || form.tested_by || "",
+      shift: hydrant.shift || form.shift || "A",
+      tested_at: todayInput(),`, `      tested_by: crew.tested_by,
+      shift: crew.shift,
+      tested_at: todayInput(),`, 'keep crew on selection');
+
+replace(`  const updateForm = (field, value) => {
+    setForm((current) => ({ ...current, [field]: value }));
+  };`, `  const updateForm = (field, value) => {
+    setForm((current) => ({ ...current, [field]: value }));
+  };
+
+  const updateCrew = (field, value) => {
+    setCrew((current) => ({ ...current, [field]: value }));
+    setForm((current) => ({ ...current, [field]: value }));
+  };`, 'add updateCrew');
+
+replace(`      body: JSON.stringify(form),`, `      body: JSON.stringify({ ...form, tested_by: crew.tested_by, shift: crew.shift }),`, 'saveHydrant crew payload');
+replace(`        ...form,
+        location_id: selectedHydrant?.location_id || form.location_id,
+        flow_gpm: flow,`, `        ...form,
+        tested_by: crew.tested_by,
+        shift: crew.shift,
+        location_id: selectedHydrant?.location_id || form.location_id,
+        flow_gpm: flow,`, 'saveTest crew payload');
+replace(`        status: form.status,
+        tested_by: form.tested_by,
+        shift: form.shift,
+        notes: form.notes,`, `        status: form.status,
+        tested_by: crew.tested_by,
+        shift: crew.shift,
+        notes: form.notes,`, 'saveInspection crew payload');
+
+replace(`                <p className="truncate text-sm font-bold">{form.tested_by || "Field User"}</p>
+                <p className="text-sm text-white/70">{form.shift || "A"} Shift</p>`, `                <p className="truncate text-sm font-bold">{crew.tested_by || "Field User"}</p>
+                <p className="text-sm text-white/70">{crew.shift || "A"} Shift</p>`, 'sidebar crew display');
+
+replace(`              form={form}
+              inspectionRows={inspectionRows}`, `              form={form}
+              crew={crew}
+              inspectionRows={inspectionRows}`, 'pass crew to inspection');
+replace(`              form={form}
+              flow={flow}`, `              crew={crew}
+              form={form}
+              flow={flow}`, 'pass crew to dashboard');
+replace(`              updateForm={updateForm}
+              visibleHydrants={visibleHydrants}`, `              updateCrew={updateCrew}
+              updateForm={updateForm}
+              visibleHydrants={visibleHydrants}`, 'pass updateCrew to dashboard');
+
+replace(`    form,
+    flow,`, `    crew,
+    form,
+    flow,`, 'dashboard destructure crew');
+replace(`    mappedHydrants,
+    updateForm,`, `    mappedHydrants,
+    updateCrew,
+    updateForm,`, 'dashboard destructure updateCrew');
+
+replace(`      <div className="grid gap-5 xl:grid-cols-[360px_1fr]">
+        <div className="grid gap-4">
+          <Panel title="Filters">`, `      <div className="grid gap-5 xl:grid-cols-[360px_1fr]">
+        <div className="grid gap-4">
+          <Panel title="Crew">
+            <div className="grid gap-4 p-4">
+              <Field label="Tested By" value={crew.tested_by} onChange={(value) => updateCrew("tested_by", value)} />
+              <Select label="Shift" value={crew.shift} onChange={(value) => updateCrew("shift", value)} options={["A", "B", "C"]} />
+            </div>
+          </Panel>
+
+          <Panel title="Filters">`, 'add crew panel');
+
+replace(`<Droplets className="h-6 w-6 text-red-700" />`, `<Droplets className="h-6 w-6" style={{ color: getHydrantStyle(hydrant).color }} />`, 'list hydrant color');
+replace(`hydrant.status === "Out of Service" ? "bg-orange-100 text-orange-700" : "bg-green-100 text-green-700"`, `hydrant.status === "Out of Service" ? "bg-slate-950 text-white" : "bg-green-100 text-green-700"`, 'oos badge black');
+
+replace(`          <Field label="Tested By" value={form.tested_by} onChange={(value) => updateForm("tested_by", value)} />
+          <Select label="Shift" value={form.shift} onChange={(value) => updateForm("shift", value)} options={["A", "B", "C"]} />
+`, '', 'remove flow crew fields');
+
+replace(`function InspectionScreen({ form, inspectionRows, updateForm, updateInspectionRow, saveInspection, saveHydrant }) {`, `function InspectionScreen({ form, crew, inspectionRows, updateForm, updateInspectionRow, saveInspection, saveHydrant }) {`, 'inspection crew prop');
+replace(`          <Select dark label="Inspector / Tested By" value={form.tested_by} onChange={(value) => updateForm("tested_by", value)} options={[form.tested_by || "Field User", "John Smith"]} icon={BriefcaseBusiness} />
+          <Select dark label="Shift" value={form.shift} onChange={(value) => updateForm("shift", value)} options={["A", "B", "C"]} />
+`, '', 'remove inspection crew fields');
+replace(`        <div className="grid gap-4 lg:grid-cols-4">`, `        <div className="grid gap-4 lg:grid-cols-4">
+          <div className="rounded-md border border-white/10 bg-black/20 px-3 py-2 lg:col-span-2">
+            <p className="text-xs font-black uppercase text-white/60">Crew</p>
+            <p className="mt-1 text-sm font-bold">{crew.tested_by || "Field User"} - {crew.shift || "A"} Shift</p>
+          </div>`, 'inspection crew summary');
+
+replace(`        const nfpa = getNfpaClass(hydrant.flow_gpm);`, `        const nfpa = getHydrantStyle(hydrant);`, 'map style helper');
+replace(`fillColor: hydrant.status === "Out of Service" ? "#f97316" : nfpa.color,`, `fillColor: nfpa.color,`, 'map oos black');
+
+replace(`function QuickHydrantCard({ hydrant, selectedPosition, setScreen }) {
+  const nfpa = getNfpaClass(hydrant?.flow_gpm);`, `function QuickHydrantCard({ hydrant, selectedPosition, setScreen }) {
+  const nfpa = getHydrantStyle(hydrant);`, 'quick card style helper');
+replace(`function HydrantQuickRow({ hydrant, onClick }) {
+  const nfpa = getNfpaClass(hydrant.flow_gpm);`, `function HydrantQuickRow({ hydrant, onClick }) {
+  const nfpa = getHydrantStyle(hydrant);`, 'quick row style helper');
+
+src = src.replace(`        {nfpaClasses.map((item) => (`, `        {[...nfpaClasses, { label: "Out of Service", range: "Unavailable", color: "#111827", text: "Black" }, { label: "Not Tested", range: "No flow result", color: "#64748b", text: "Gray" }].map((item) => (`);
+
+fs.writeFileSync(file, src);
