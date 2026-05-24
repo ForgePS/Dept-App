@@ -527,8 +527,8 @@ function HydrantMapScreen({ hydrants, mappedHydrants, query, selectedHydrant, se
   const selectedPosition = getHydrantPosition(selectedHydrant);
 
   return (
-    <div className="grid gap-5 p-5 xl:grid-cols-[1fr_360px]">
-      <section className="overflow-hidden rounded-md border border-slate-200 bg-white shadow-[0_5px_18px_rgba(15,23,42,0.12)]">
+    <div className="grid min-h-[calc(100vh-114px)] gap-5 p-5 xl:grid-cols-[minmax(0,1fr)_360px]">
+      <section className="flex min-h-[640px] flex-col overflow-hidden rounded-md border border-slate-200 bg-white shadow-[0_5px_18px_rgba(15,23,42,0.12)]">
         <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 px-4 py-3">
           <div>
             <h2 className="font-black uppercase text-red-700">Aerial Hydrant Map</h2>
@@ -539,12 +539,12 @@ function HydrantMapScreen({ hydrants, mappedHydrants, query, selectedHydrant, se
             <Search className="absolute right-3 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-500" />
           </div>
         </div>
-        <div className="h-[620px]">
+        <div className="min-h-[560px] flex-1">
           <AerialHydrantMap hydrants={hydrants} selectedHydrant={selectedHydrant} selectHydrant={selectHydrant} setScreen={setScreen} />
         </div>
       </section>
 
-      <aside className="grid content-start gap-4">
+      <aside className="grid min-h-[640px] content-start gap-4">
         <div className="grid grid-cols-2 gap-3">
           <MiniMetric label="Total" value={stats.total} />
           <MiniMetric label="Mapped" value={mappedHydrants.length} />
@@ -555,7 +555,7 @@ function HydrantMapScreen({ hydrants, mappedHydrants, query, selectedHydrant, se
         <QuickHydrantCard hydrant={selectedHydrant} selectedPosition={selectedPosition} setScreen={setScreen} />
 
         <Panel title={`Quick Info Cards (${hydrants.length})`}>
-          <div className="max-h-[380px] overflow-y-auto">
+          <div className="max-h-[calc(100vh-430px)] min-h-64 overflow-y-auto">
             {hydrants.slice(0, 40).map((hydrant) => (
               <HydrantQuickRow key={hydrant.hydrant_id || hydrant.location_id} hydrant={hydrant} onClick={() => selectHydrant(hydrant)} />
             ))}
