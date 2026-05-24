@@ -34,9 +34,27 @@ function ensureFiles() {
   fs.mkdirSync(DATA_DIR, { recursive: true });
 
   for (const [key, file] of Object.entries(files)) {
-    if (fs.existsSync(file)) continue;
     const seed = fs.existsSync(seedFiles[key]) ? fs.readFileSync(seedFiles[key], "utf8") : "[]";
-    fs.writeFileSync(file, seed || "[]", "utf8");
+    const seedRows = safeParseArray(seed);
+
+    if (!fs.existsSync(file)) {
+      fs.writeFileSync(file, seed || "[]", "utf8");
+      continue;
+    }
+
+    const existingRows = safeParseArray(fs.readFileSync(file, "utf8"));
+    if (!existingRows.length && seedRows.length) {
+      fs.writeFileSync(file, seed, "utf8");
+    }
+  }
+}
+
+function safeParseArray(value) {
+  try {
+    const parsed = JSON.parse(value || "[]");
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
   }
 }
 
