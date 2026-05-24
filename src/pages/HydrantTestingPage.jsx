@@ -1,5 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
+import L from "leaflet";
+import { CircleMarker, MapContainer, Popup, TileLayer, useMap } from "react-leaflet";
+import "leaflet/dist/leaflet.css";
 import {
   ArrowLeft,
   BriefcaseBusiness,
@@ -16,7 +19,6 @@ import {
   Filter,
   Gauge,
   Home,
-  ListChecks,
   MapPin,
   RefreshCw,
   Save,
@@ -27,6 +29,7 @@ import {
 
 const navItems = [
   { key: "dashboard", label: "Dashboard", icon: Home },
+  { key: "map", label: "Map", icon: MapPin },
   { key: "hydrants", label: "Hydrants", icon: Droplets },
   { key: "flow", label: "Flow Tests", icon: Gauge },
   { key: "inspection", label: "Inspections", icon: ClipboardList },
@@ -79,6 +82,25 @@ const calcFlow = (dischargeSize, pitotPsi) => {
   return Math.round(29.83 * 0.9 * d * d * Math.sqrt(p));
 };
 
+const nfpaClasses = [
+  { label: "Class AA", range: "1500+ gpm", min: 1500, color: "#2563eb", text: "Blue" },
+  { label: "Class A", range: "1000-1499 gpm", min: 1000, color: "#16a34a", text: "Green" },
+  { label: "Class B", range: "500-999 gpm", min: 500, color: "#f97316", text: "Orange" },
+  { label: "Class C", range: "0-499 gpm", min: 0, color: "#dc2626", text: "Red" },
+];
+
+const getNfpaClass = (flowGpm) => {
+  const flowValue = Number(flowGpm || 0);
+  return nfpaClasses.find((item) => flowValue >= item.min) || nfpaClasses[nfpaClasses.length - 1];
+};
+
+const getHydrantPosition = (hydrant) => {
+  if (!hydrant) return null;
+  const lat = Number(hydrant.latitude || hydrant.lat);
+  const lon = Number(hydrant.longitude || hydrant.lon || hydrant.lng);
+  return Number.isFinite(lat) && Number.isFinite(lon) ? [lat, lon] : null;
+};
+
 const api = async (path, options) => {
   const response = await fetch(path, options);
   const data = await response.json();
@@ -118,6 +140,8 @@ export default function HydrantTestingPage() {
     outService: hydrants.filter((hydrant) => hydrant.status === "Out of Service").length,
     tests: tests.length,
   }), [hydrants, tests]);
+
+  const mappedHydrants = useMemo(() => hydrants.filter((hydrant) => getHydrantPosition(hydrant)), [hydrants]);
 
   const visibleHydrants = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -337,6 +361,7 @@ export default function HydrantTestingPage() {
               status={status}
               tests={tests}
               inspections={inspections}
+              mappedHydrants={mappedHydrants}
               updateForm={updateForm}
               visibleHydrants={visibleHydrants}
             />
@@ -367,6 +392,7 @@ function DashboardScreen(props) {
     status,
     tests,
     inspections,
+    mappedHydrants,
     updateForm,
     visibleHydrants,
   } = props;
@@ -397,6 +423,35 @@ function DashboardScreen(props) {
     );
   }
 
+  if (screen === "map" || screen === "hydrants") {
+    return (
+      <HydrantMapScreen
+        hydrants={visibleHydrants}
+        mappedHydrants={mappedHydrants}
+        query={query}
+        selectedHydrant={form}
+        selectHydrant={selectHydrant}
+        setQuery={setQuery}
+        setScreen={setScreen}
+        stats={stats}
+      />
+    );
+  }
+
+  if (screen === "flow") {
+    return (
+      <FlowTestScreen
+        flow={flow}
+        form={form}
+        handleHydrantIdInput={handleHydrantIdInput}
+        saveHydrant={saveHydrant}
+        saveTest={saveTest}
+        setScreen={setScreen}
+        updateForm={updateForm}
+      />
+    );
+  }
+
   return (
     <div className="p-5">
       <div className="mb-4 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
@@ -406,7 +461,7 @@ function DashboardScreen(props) {
         <Metric icon={Gauge} label="Tests This Year" value={stats.tests} tone="blue" />
       </div>
 
-      <div className="grid gap-5 xl:grid-cols-[310px_1fr]">
+      <div className="grid gap-5 xl:grid-cols-[360px_1fr]">
         <div className="grid gap-4">
           <Panel title="Filters">
             <div className="p-4">
@@ -456,39 +511,118 @@ function DashboardScreen(props) {
         </div>
 
         <div className="grid gap-4">
-          <Panel title={screen === "hydrants" ? "Hydrant Record" : "Hydrant Test"}>
-            <div className="grid gap-4 p-5 lg:grid-cols-4">
-              <Field label="Hydrant ID" value={form.hydrant_id} onChange={handleHydrantIdInput} />
-              <Select label="District" value={form.district} onChange={(value) => updateForm("district", value)} options={["1", "2", "3"]} />
-              <Field className="lg:col-span-2" label="Address" value={form.location} onChange={(value) => updateForm("location", value)} />
-              <Select label="Discharge Size" value={form.discharge_size} onChange={(value) => updateForm("discharge_size", value)} options={["2", "2.25", "2.5"]} />
-              <Field label="Pitot PSI" type="number" value={form.pitot_psi} onChange={(value) => updateForm("pitot_psi", value)} />
-              <Field label="Static PSI" type="number" value={form.static_psi} onChange={(value) => updateForm("static_psi", value)} />
-              <Field label="Residual PSI" type="number" value={form.residual_psi} onChange={(value) => updateForm("residual_psi", value)} />
-              <div className="rounded-md border border-slate-300 bg-white p-3 lg:col-span-4">
-                <p className="text-sm font-bold">Flow GPM (Calculated)</p>
-                <p className="mt-1 text-3xl font-black text-red-700">{flow ? `${flow.toLocaleString()} GPM` : "--"}</p>
-                <p className="text-xs font-semibold text-slate-500">Flow GPM = 29.83 x 0.9 x discharge size^2 x sqrt(pitot PSI)</p>
-              </div>
-              <Select label="Status" value={form.status} onChange={(value) => updateForm("status", value)} options={["In Service", "Out of Service"]} />
-              <Field label="Tested By" value={form.tested_by} onChange={(value) => updateForm("tested_by", value)} />
-              <Select label="Shift" value={form.shift} onChange={(value) => updateForm("shift", value)} options={["A", "B", "C"]} />
-              <Field label="Date / Time" type="datetime-local" value={form.tested_at} onChange={(value) => updateForm("tested_at", value)} />
-              <label className="grid gap-2 lg:col-span-4">
-                <span className="text-sm font-bold">Notes</span>
-                <textarea value={form.notes || ""} onChange={(event) => updateForm("notes", event.target.value)} className="hydrant-input min-h-24 resize-y" placeholder="Enter notes..." />
-              </label>
-              <div className="flex flex-wrap gap-4 lg:col-span-4">
-                <ActionButton icon={Save} label="Save Test" onClick={saveTest} />
-                <ActionButton icon={Droplets} label="Save Hydrant" variant="outline" onClick={saveHydrant} />
-                <ActionButton icon={Camera} label="Add Photo" variant="outline" />
-                <ActionButton icon={ListChecks} label="View Tests" variant="outline" onClick={() => setScreen("flow")} />
-                <ActionButton icon={MapPin} label="View on Map" variant="outline" />
-              </div>
-            </div>
-          </Panel>
+          <AerialPanel
+            hydrants={visibleHydrants}
+            selectedHydrant={form}
+            selectHydrant={selectHydrant}
+            setScreen={setScreen}
+          />
+          <NfpaStandardsPanel />
         </div>
       </div>
+    </div>
+  );
+}
+
+function HydrantMapScreen({ hydrants, mappedHydrants, query, selectedHydrant, selectHydrant, setQuery, setScreen, stats }) {
+  const selectedPosition = getHydrantPosition(selectedHydrant);
+
+  return (
+    <div className="grid gap-5 p-5 xl:grid-cols-[1fr_360px]">
+      <section className="overflow-hidden rounded-md border border-slate-200 bg-white shadow-[0_5px_18px_rgba(15,23,42,0.12)]">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 px-4 py-3">
+          <div>
+            <h2 className="font-black uppercase text-red-700">Aerial Hydrant Map</h2>
+            <p className="text-sm font-semibold text-slate-500">{mappedHydrants.length.toLocaleString()} mapped city hydrants</p>
+          </div>
+          <div className="relative w-full sm:w-80">
+            <input value={query} onChange={(event) => setQuery(event.target.value)} className="hydrant-input pr-10" placeholder="Search hydrant ID" />
+            <Search className="absolute right-3 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-500" />
+          </div>
+        </div>
+        <div className="h-[620px]">
+          <AerialHydrantMap hydrants={hydrants} selectedHydrant={selectedHydrant} selectHydrant={selectHydrant} setScreen={setScreen} />
+        </div>
+      </section>
+
+      <aside className="grid content-start gap-4">
+        <div className="grid grid-cols-2 gap-3">
+          <MiniMetric label="Total" value={stats.total} />
+          <MiniMetric label="Mapped" value={mappedHydrants.length} />
+          <MiniMetric label="In Service" value={stats.inService} />
+          <MiniMetric label="OOS" value={stats.outService} />
+        </div>
+
+        <QuickHydrantCard hydrant={selectedHydrant} selectedPosition={selectedPosition} setScreen={setScreen} />
+
+        <Panel title={`Quick Info Cards (${hydrants.length})`}>
+          <div className="max-h-[380px] overflow-y-auto">
+            {hydrants.slice(0, 40).map((hydrant) => (
+              <HydrantQuickRow key={hydrant.hydrant_id || hydrant.location_id} hydrant={hydrant} onClick={() => selectHydrant(hydrant)} />
+            ))}
+          </div>
+        </Panel>
+      </aside>
+    </div>
+  );
+}
+
+function AerialPanel({ hydrants, selectedHydrant, selectHydrant, setScreen }) {
+  return (
+    <Panel title="Aerial View" subtitle="Satellite map with hydrant overlays and quick action popups.">
+      <div className="h-[420px]">
+        <AerialHydrantMap hydrants={hydrants} selectedHydrant={selectedHydrant} selectHydrant={selectHydrant} setScreen={setScreen} />
+      </div>
+    </Panel>
+  );
+}
+
+function FlowTestScreen({ flow, form, handleHydrantIdInput, saveHydrant, saveTest, setScreen, updateForm }) {
+  const nfpaClass = form.nfpa_class || getNfpaClass(flow || form.flow_gpm).label;
+
+  return (
+    <div className="p-5">
+      <Panel title="Flow Test" subtitle="Record pitot, static, residual, and NFPA color classification.">
+        <div className="grid gap-4 p-5 lg:grid-cols-4">
+          <Field label="Hydrant ID" value={form.hydrant_id} onChange={handleHydrantIdInput} />
+          <Select label="District" value={form.district} onChange={(value) => updateForm("district", value)} options={["", "1", "2", "3"]} />
+          <Field className="lg:col-span-2" label="Address" value={form.location} onChange={(value) => updateForm("location", value)} />
+          <Select label="Discharge Size" value={form.discharge_size} onChange={(value) => updateForm("discharge_size", value)} options={["2", "2.25", "2.5"]} />
+          <Field label="Pitot PSI" type="number" value={form.pitot_psi} onChange={(value) => updateForm("pitot_psi", value)} />
+          <Field label="Static PSI" type="number" value={form.static_psi} onChange={(value) => updateForm("static_psi", value)} />
+          <Field label="Residual PSI" type="number" value={form.residual_psi} onChange={(value) => updateForm("residual_psi", value)} />
+          <div className="rounded-md border border-slate-300 bg-white p-3 lg:col-span-2">
+            <p className="text-sm font-bold">Flow GPM (Calculated)</p>
+            <p className="mt-1 text-4xl font-black text-red-700">{flow ? `${flow.toLocaleString()} GPM` : "--"}</p>
+            <p className="text-xs font-semibold text-slate-500">29.83 x 0.9 x discharge size^2 x sqrt(pitot PSI)</p>
+          </div>
+          <div className="rounded-md border border-slate-300 bg-white p-3 lg:col-span-2">
+            <p className="text-sm font-bold">NFPA Color Standard</p>
+            <Select value={nfpaClass} onChange={(value) => updateForm("nfpa_class", value)} options={nfpaClasses.map((item) => item.label)} />
+            <div className="mt-3 grid grid-cols-2 gap-2">
+              {nfpaClasses.map((item) => (
+                <div key={item.label} className="rounded border border-slate-200 p-2 text-xs font-bold">
+                  <span className="mr-2 inline-block h-3 w-3 rounded-full" style={{ backgroundColor: item.color }} />
+                  {item.label}: {item.range}
+                </div>
+              ))}
+            </div>
+          </div>
+          <Select label="Status" value={form.status} onChange={(value) => updateForm("status", value)} options={["In Service", "Out of Service"]} />
+          <Field label="Tested By" value={form.tested_by} onChange={(value) => updateForm("tested_by", value)} />
+          <Select label="Shift" value={form.shift} onChange={(value) => updateForm("shift", value)} options={["A", "B", "C"]} />
+          <Field label="Date / Time" type="datetime-local" value={form.tested_at} onChange={(value) => updateForm("tested_at", value)} />
+          <label className="grid gap-2 lg:col-span-4">
+            <span className="text-sm font-bold">Notes</span>
+            <textarea value={form.notes || ""} onChange={(event) => updateForm("notes", event.target.value)} className="hydrant-input min-h-24 resize-y" placeholder="Enter notes..." />
+          </label>
+          <div className="flex flex-wrap gap-4 lg:col-span-4">
+            <ActionButton icon={Save} label="Save Test" onClick={saveTest} />
+            <ActionButton icon={Droplets} label="Save Hydrant" variant="outline" onClick={saveHydrant} />
+            <ActionButton icon={MapPin} label="View on Map" variant="outline" onClick={() => setScreen("map")} />
+          </div>
+        </div>
+      </Panel>
     </div>
   );
 }
@@ -604,6 +738,170 @@ function Metric({ icon: Icon, label, value, tone }) {
         <p className="text-sm font-semibold text-slate-500">{label}</p>
       </div>
     </div>
+  );
+}
+
+function MiniMetric({ label, value }) {
+  return (
+    <div className="rounded-md border border-slate-200 bg-white p-4 shadow-sm">
+      <p className="text-xs font-black uppercase text-slate-500">{label}</p>
+      <p className="mt-1 text-2xl font-black">{Number(value || 0).toLocaleString()}</p>
+    </div>
+  );
+}
+
+function AerialHydrantMap({ hydrants, selectedHydrant, selectHydrant, setScreen }) {
+  const mappedHydrants = hydrants.filter((hydrant) => getHydrantPosition(hydrant));
+  const selectedPosition = getHydrantPosition(selectedHydrant) || getHydrantPosition(mappedHydrants[0]) || [34.955, -90.034];
+
+  return (
+    <MapContainer center={selectedPosition} zoom={15} className="h-full w-full" scrollWheelZoom>
+      <TileLayer
+        attribution="Tiles &copy; Esri"
+        url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
+      />
+      <TileLayer
+        attribution="Labels &copy; Esri"
+        url="https://services.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}"
+      />
+      <MapAutoFrame hydrants={mappedHydrants} selectedHydrant={selectedHydrant} />
+      {mappedHydrants.map((hydrant) => {
+        const position = getHydrantPosition(hydrant);
+        const nfpa = getNfpaClass(hydrant.flow_gpm);
+        const isSelected = (selectedHydrant?.hydrant_id || selectedHydrant?.location_id) === (hydrant.hydrant_id || hydrant.location_id);
+
+        return (
+          <CircleMarker
+            key={hydrant.hydrant_id || hydrant.location_id}
+            center={position}
+            radius={isSelected ? 10 : 7}
+            pathOptions={{
+              color: "#ffffff",
+              fillColor: hydrant.status === "Out of Service" ? "#f97316" : nfpa.color,
+              fillOpacity: 0.92,
+              weight: isSelected ? 3 : 1.5,
+            }}
+            eventHandlers={{ click: () => selectHydrant(hydrant) }}
+          >
+            <Popup>
+              <div className="min-w-[230px] text-slate-900">
+                <div className="mb-2 flex items-start justify-between gap-3">
+                  <div>
+                    <p className="text-base font-black">Hydrant {hydrant.hydrant_id || hydrant.location_id}</p>
+                    <p className="text-xs font-semibold text-slate-600">{hydrant.location || hydrant.address || "No location listed"}</p>
+                  </div>
+                  <span className="rounded px-2 py-1 text-[10px] font-black text-white" style={{ backgroundColor: nfpa.color }}>
+                    {nfpa.label}
+                  </span>
+                </div>
+                <dl className="grid grid-cols-[88px_1fr] gap-x-2 gap-y-1 text-xs">
+                  <dt className="font-bold text-slate-500">Provider</dt><dd>{hydrant.provider || "Unknown"}</dd>
+                  <dt className="font-bold text-slate-500">Flow</dt><dd>{hydrant.flow_gpm ? `${Number(hydrant.flow_gpm).toLocaleString()} GPM` : "Not tested"}</dd>
+                  <dt className="font-bold text-slate-500">Status</dt><dd>{hydrant.status || "In Service"}</dd>
+                  <dt className="font-bold text-slate-500">Lat/Lon</dt><dd>{position[0].toFixed(6)}, {position[1].toFixed(6)}</dd>
+                </dl>
+                <div className="mt-3 flex gap-2">
+                  <button type="button" onClick={() => setScreen("inspection")} className="rounded bg-blue-600 px-3 py-2 text-xs font-black text-white">Service</button>
+                  <button type="button" onClick={() => setScreen("flow")} className="rounded bg-blue-600 px-3 py-2 text-xs font-black text-white">Flow Test</button>
+                </div>
+              </div>
+            </Popup>
+          </CircleMarker>
+        );
+      })}
+    </MapContainer>
+  );
+}
+
+function MapAutoFrame({ hydrants, selectedHydrant }) {
+  const map = useMap();
+
+  useEffect(() => {
+    const selectedPosition = getHydrantPosition(selectedHydrant);
+    if (selectedPosition) {
+      map.setView(selectedPosition, 17, { animate: true });
+      return;
+    }
+
+    const positions = hydrants.map(getHydrantPosition).filter(Boolean).slice(0, 500);
+    if (!positions.length) return;
+
+    const bounds = positions.reduce((acc, position) => acc.extend(position), L.latLngBounds(positions[0], positions[0]));
+    map.fitBounds(bounds, { padding: [24, 24], maxZoom: 15 });
+  }, [hydrants, map, selectedHydrant]);
+
+  return null;
+}
+
+function QuickHydrantCard({ hydrant, selectedPosition, setScreen }) {
+  const nfpa = getNfpaClass(hydrant?.flow_gpm);
+
+  return (
+    <Panel title="Selected Hydrant">
+      <div className="p-4">
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <p className="text-2xl font-black">{hydrant?.hydrant_id || hydrant?.location_id || "No hydrant selected"}</p>
+            <p className="mt-1 text-sm font-semibold text-slate-600">{hydrant?.location || hydrant?.address || "Choose a hydrant from the map."}</p>
+          </div>
+          <span className="rounded px-2 py-1 text-xs font-black text-white" style={{ backgroundColor: nfpa.color }}>
+            {nfpa.label}
+          </span>
+        </div>
+        <div className="mt-4 grid gap-2 text-sm">
+          <InfoLine label="Flow" value={hydrant?.flow_gpm ? `${Number(hydrant.flow_gpm).toLocaleString()} GPM` : "Not tested"} />
+          <InfoLine label="Provider" value={hydrant?.provider || "Unknown"} />
+          <InfoLine label="Status" value={hydrant?.status || "In Service"} />
+          <InfoLine label="Latitude / Longitude" value={selectedPosition ? `${selectedPosition[0].toFixed(6)}, ${selectedPosition[1].toFixed(6)}` : "No GPS"} />
+        </div>
+        <div className="mt-4 grid grid-cols-2 gap-3">
+          <ActionButton icon={ClipboardList} label="Service" onClick={() => setScreen("inspection")} />
+          <ActionButton icon={Gauge} label="Flow Test" variant="outline" onClick={() => setScreen("flow")} />
+        </div>
+      </div>
+    </Panel>
+  );
+}
+
+function HydrantQuickRow({ hydrant, onClick }) {
+  const nfpa = getNfpaClass(hydrant.flow_gpm);
+
+  return (
+    <button type="button" onClick={onClick} className="grid w-full grid-cols-[auto_1fr_auto] items-center gap-3 border-b border-slate-200 px-4 py-3 text-left hover:bg-red-50">
+      <span className="h-4 w-4 rounded-full ring-2 ring-white" style={{ backgroundColor: nfpa.color }} />
+      <span className="min-w-0">
+        <span className="block font-black">{hydrant.hydrant_id || hydrant.location_id}</span>
+        <span className="block truncate text-xs font-semibold text-slate-500">{hydrant.location || hydrant.address || "No location"}</span>
+      </span>
+      <ChevronRight className="h-4 w-4 text-slate-400" />
+    </button>
+  );
+}
+
+function InfoLine({ label, value }) {
+  return (
+    <div className="grid grid-cols-[120px_1fr] gap-3">
+      <span className="font-black text-slate-500">{label}</span>
+      <span className="font-semibold text-slate-800">{value}</span>
+    </div>
+  );
+}
+
+function NfpaStandardsPanel() {
+  return (
+    <Panel title="NFPA Color Standards">
+      <div className="grid gap-3 p-4 sm:grid-cols-2">
+        {nfpaClasses.map((item) => (
+          <div key={item.label} className="flex items-center gap-3 rounded-md border border-slate-200 bg-white p-3">
+            <span className="h-8 w-8 rounded-full shadow-inner" style={{ backgroundColor: item.color }} />
+            <div>
+              <p className="font-black">{item.label} - {item.text}</p>
+              <p className="text-sm font-semibold text-slate-500">{item.range}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+    </Panel>
   );
 }
 
