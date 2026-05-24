@@ -750,8 +750,23 @@ function MiniMetric({ label, value }) {
 }
 
 function AerialHydrantMap({ hydrants, selectedHydrant, selectHydrant, setScreen }) {
+  const [userLocation, setUserLocation] = useState(null);
   const mappedHydrants = hydrants.filter((hydrant) => getHydrantPosition(hydrant));
-  const selectedPosition = getHydrantPosition(selectedHydrant) || getHydrantPosition(mappedHydrants[0]) || [34.955, -90.034];
+  const selectedPosition = userLocation || getHydrantPosition(selectedHydrant) || getHydrantPosition(mappedHydrants[0]) || [34.955, -90.034];
+
+  useEffect(() => {
+    if (!navigator.geolocation) return undefined;
+
+    const watcher = navigator.geolocation.watchPosition(
+      (position) => {
+        setUserLocation([position.coords.latitude, position.coords.longitude]);
+      },
+      () => {},
+      { enableHighAccuracy: true, maximumAge: 30000, timeout: 10000 },
+    );
+
+    return () => navigator.geolocation.clearWatch(watcher);
+  }, []);
 
   return (
     <MapContainer center={selectedPosition} zoom={15} className="h-full w-full" scrollWheelZoom>
@@ -763,7 +778,18 @@ function AerialHydrantMap({ hydrants, selectedHydrant, selectHydrant, setScreen 
         attribution="Labels &copy; Esri"
         url="https://services.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}"
       />
-      <MapAutoFrame hydrants={mappedHydrants} selectedHydrant={selectedHydrant} />
+      <MapAutoFrame hydrants={mappedHydrants} selectedHydrant={selectedHydrant} userLocation={userLocation} />
+      {userLocation && (
+        <CircleMarker
+          center={userLocation}
+          radius={9}
+          pathOptions={{ color: "#ffffff", fillColor: "#2563eb", fillOpacity: 0.95, weight: 3 }}
+        >
+          <Popup>
+            <div className="text-sm font-bold text-slate-900">Current iPad location</div>
+          </Popup>
+        </CircleMarker>
+      )}
       {mappedHydrants.map((hydrant) => {
         const position = getHydrantPosition(hydrant);
         const nfpa = getNfpaClass(hydrant.flow_gpm);
@@ -812,10 +838,17 @@ function AerialHydrantMap({ hydrants, selectedHydrant, selectHydrant, setScreen 
   );
 }
 
-function MapAutoFrame({ hydrants, selectedHydrant }) {
+function MapAutoFrame({ hydrants, selectedHydrant, userLocation }) {
   const map = useMap();
+  const centeredOnUser = useRef(false);
 
   useEffect(() => {
+    if (userLocation && !centeredOnUser.current) {
+      map.setView(userLocation, 17, { animate: true });
+      centeredOnUser.current = true;
+      return;
+    }
+
     const selectedPosition = getHydrantPosition(selectedHydrant);
     if (selectedPosition) {
       map.setView(selectedPosition, 17, { animate: true });
@@ -827,7 +860,7 @@ function MapAutoFrame({ hydrants, selectedHydrant }) {
 
     const bounds = positions.reduce((acc, position) => acc.extend(position), L.latLngBounds(positions[0], positions[0]));
     map.fitBounds(bounds, { padding: [24, 24], maxZoom: 15 });
-  }, [hydrants, map, selectedHydrant]);
+  }, [hydrants, map, selectedHydrant, userLocation]);
 
   return null;
 }

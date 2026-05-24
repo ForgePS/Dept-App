@@ -23,6 +23,11 @@ const seedFiles = {
 
 const upload = multer({ storage: multer.memoryStorage() });
 
+const DISTRICT_BOUNDARIES = {
+  hornLakeRoadLon: -90.045,
+  hurtRoadLon: -90.025,
+};
+
 app.use(express.json({ limit: "50mb" }));
 app.use(express.urlencoded({ extended: true, limit: "50mb" }));
 
@@ -87,6 +92,14 @@ function calcFlowGpm(dischargeSize, pitotPsi) {
   return Math.round(29.83 * 0.9 * d * d * Math.sqrt(p));
 }
 
+function assignHydrantDistrict(input = {}) {
+  const lon = Number(input.longitude || input.lon || input.lng);
+  if (!Number.isFinite(lon)) return clean(input.district ?? input.District);
+  if (lon < DISTRICT_BOUNDARIES.hornLakeRoadLon) return "3";
+  if (lon < DISTRICT_BOUNDARIES.hurtRoadLon) return "1";
+  return "2";
+}
+
 function normalizeStatus(value) {
   const status = clean(value).toLowerCase();
   if (status === "out of service" || status === "oos") return "Out of Service";
@@ -102,7 +115,7 @@ function normalizeHydrant(input = {}) {
   return {
     location_id: clean(input.location_id ?? input["Location ID"]),
     hydrant_id: clean(input.hydrant_id ?? input["Hydrant ID"] ?? input.id),
-    district: clean(input.district ?? input.District),
+    district: assignHydrantDistrict(input),
     location: clean(input.location ?? input.address ?? input.Location ?? input.Address),
     address: clean(input.address ?? input.location ?? input.Address ?? input.Location),
     description: clean(input.description ?? input.Description),
@@ -131,6 +144,25 @@ function hydrantKey(hydrant) {
 
 function findHydrantIndex(hydrants, id) {
   return hydrants.findIndex((hydrant) => hydrantKey(hydrant) === id || clean(hydrant.hydrant_id) === id);
+}
+
+function migrateHydrantDistricts() {
+  ensureFiles();
+  const hydrants = safeParseArray(fs.readFileSync(files.hydrants, "utf8"));
+  let changed = false;
+
+  const updated = hydrants.map((hydrant) => {
+    const district = assignHydrantDistrict(hydrant);
+    if (!district || hydrant.district === district) return hydrant;
+    changed = true;
+    return {
+      ...hydrant,
+      district,
+      district_source: "Road boundary assignment",
+    };
+  });
+
+  if (changed) writeJson(files.hydrants, updated);
 }
 
 app.get("/api/health", (req, res) => {
@@ -308,5 +340,6 @@ app.get("*", (req, res) => {
 
 app.listen(PORT, () => {
   ensureFiles();
+  migrateHydrantDistricts();
   console.log(`Dept-App running on port ${PORT}`);
 });
