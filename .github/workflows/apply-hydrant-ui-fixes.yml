@@ -16,6 +16,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
+      - run: npm ci
       - run: node scripts/apply-hydrant-ui-fixes.cjs
       - run: npm run build
       - name: Commit changes
