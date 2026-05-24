@@ -1,0 +1,34 @@
+name: Apply activity email and yearly check
+
+on:
+  push:
+    paths:
+      - '.github/workflows/apply-activity-email-year-check.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: node scripts/apply-activity-email-year-check.cjs
+      - run: npm run build
+      - name: Commit patch
+        run: |
+          rm -f .github/workflows/apply-daily-activity-email.yml scripts/apply-daily-activity-email.cjs
+          rm .github/workflows/apply-activity-email-year-check.yml scripts/apply-activity-email-year-check.cjs
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add server.cjs src/pages/HydrantTestingPage.jsx .github/workflows/apply-daily-activity-email.yml scripts/apply-daily-activity-email.cjs .github/workflows/apply-activity-email-year-check.yml scripts/apply-activity-email-year-check.cjs
+          git commit -m "Add daily activity email export and yearly check status"
+          git push
