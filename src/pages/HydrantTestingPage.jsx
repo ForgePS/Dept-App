@@ -36,6 +36,8 @@ const navItems = [
   { key: "settings", label: "Settings", icon: Settings },
 ];
 
+const crewUserOptions = ["", "Field User", "John Smith", "Jeremy Powell"];
+
 const checklistItems = [
   ["No Obstructions", "Area clear and accessible."],
   ["Operable (Turns Open/Closed)", "Operated smoothly."],
@@ -127,7 +129,7 @@ export default function HydrantTestingPage() {
   const [status, setStatus] = useState("All");
   const [query, setQuery] = useState("");
   const [selectedHydrant, setSelectedHydrant] = useState(null);
-  const [crew, setCrew] = useState({ tested_by: "", shift: "A" });
+  const [crew, setCrew] = useState({ tested_by: "", shift: "A", tested_at: todayInput() });
   const [form, setForm] = useState({ ...emptyHydrant, tested_at: todayInput() });
   const [inspectionRows, setInspectionRows] = useState(() =>
     checklistItems.map(([item, notes]) => ({ item, result: "Yes", notes, repair_needed: "No", photo: "" })),
@@ -181,6 +183,12 @@ export default function HydrantTestingPage() {
     loadAll().catch((error) => setMessage(error.message));
   }, []);
 
+  useEffect(() => {
+    if (!message) return undefined;
+    const timer = window.setTimeout(() => setMessage(""), 3500);
+    return () => window.clearTimeout(timer);
+  }, [message]);
+
   const selectHydrant = (hydrant) => {
     setSelectedHydrant(hydrant);
     setForm({
@@ -191,7 +199,7 @@ export default function HydrantTestingPage() {
       discharge_size: hydrant.discharge_size || "2.5",
       tested_by: crew.tested_by,
       shift: crew.shift,
-      tested_at: todayInput(),
+      tested_at: crew.tested_at || form.tested_at || todayInput(),
     });
   };
 
@@ -230,7 +238,7 @@ export default function HydrantTestingPage() {
     const result = await api("/api/hydrants", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ ...form, tested_by: crew.tested_by, shift: crew.shift }),
+      body: JSON.stringify({ ...form, tested_by: crew.tested_by, shift: crew.shift, tested_at: crew.tested_at }),
     });
     setMessage("Hydrant saved.");
     selectHydrant(result.hydrant);
@@ -245,6 +253,7 @@ export default function HydrantTestingPage() {
         ...form,
         tested_by: crew.tested_by,
         shift: crew.shift,
+        tested_at: crew.tested_at,
         location_id: selectedHydrant?.location_id || form.location_id,
         flow_gpm: flow,
       }),
@@ -265,7 +274,7 @@ export default function HydrantTestingPage() {
         tested_by: crew.tested_by,
         shift: crew.shift,
         notes: form.notes,
-        inspected_at: form.tested_at,
+        inspected_at: crew.tested_at,
         checklist: inspectionRows,
       }),
     });
@@ -314,6 +323,7 @@ export default function HydrantTestingPage() {
               <div className="min-w-0">
                 <p className="truncate text-sm font-bold">{crew.tested_by || "Field User"}</p>
                 <p className="text-sm text-white/70">{crew.shift || "A"} Shift</p>
+                <p className="text-xs text-white/50">{crew.tested_at?.slice(0, 10) || "No date"}</p>
               </div>
               <ChevronDown className="ml-auto h-4 w-4 text-white/60" />
             </div>
@@ -488,8 +498,9 @@ function DashboardScreen(props) {
         <div className="grid gap-4">
           <Panel title="Crew">
             <div className="grid gap-4 p-4">
-              <Field label="Tested By" value={crew.tested_by} onChange={(value) => updateCrew("tested_by", value)} />
+              <Select label="User" value={crew.tested_by} onChange={(value) => updateCrew("tested_by", value)} options={crewUserOptions} />
               <Select label="Shift" value={crew.shift} onChange={(value) => updateCrew("shift", value)} options={["A", "B", "C"]} />
+              <Field label="Date / Time" type="datetime-local" value={crew.tested_at} onChange={(value) => updateCrew("tested_at", value)} />
             </div>
           </Panel>
 
@@ -683,7 +694,6 @@ function FlowTestScreen({ flow, form, handleHydrantIdInput, saveHydrant, saveTes
             </div>
           </div>
           <Select label="Status" value={form.status} onChange={(value) => updateForm("status", value)} options={["In Service", "Out of Service"]} />
-          <Field label="Date / Time" type="datetime-local" value={form.tested_at} onChange={(value) => updateForm("tested_at", value)} />
           <label className="grid gap-2 lg:col-span-4">
             <span className="text-sm font-bold">Notes</span>
             <textarea value={form.notes || ""} onChange={(event) => updateForm("notes", event.target.value)} className="hydrant-input min-h-24 resize-y" placeholder="Enter notes..." />
@@ -719,8 +729,8 @@ function InspectionScreen({ form, crew, inspectionRows, updateForm, updateInspec
           <div className="rounded-md border border-white/10 bg-black/20 px-3 py-2 lg:col-span-2">
             <p className="text-xs font-black uppercase text-white/60">Crew</p>
             <p className="mt-1 text-sm font-bold">{crew.tested_by || "Field User"} - {crew.shift || "A"} Shift</p>
+            <p className="mt-1 text-xs font-semibold text-white/70">{crew.tested_at ? new Date(crew.tested_at).toLocaleString() : "No date selected"}</p>
           </div>
-          <Field dark label="Inspection Date / Time" type="datetime-local" value={form.tested_at} onChange={(value) => updateForm("tested_at", value)} icon={CalendarDays} />
           <Select dark label="District" value={form.district} onChange={(value) => updateForm("district", value)} options={["1", "2", "3"]} />
           <Select dark label="Status" value={form.status} onChange={(value) => updateForm("status", value)} options={["In Service", "Out of Service"]} />
           <Field dark label="Weather Conditions" value="72F  Partly Cloudy" onChange={() => {}} />
