@@ -768,7 +768,6 @@ function InspectionScreen({ form, crew, handleHydrantIdInput, inspectionRows, up
           <Field dark label="Hydrant ID" value={form.hydrant_id || form.location_id || ""} onChange={handleHydrantIdInput} icon={Droplets} />
           <Select dark label="District" value={form.district} onChange={(value) => updateForm("district", value)} options={["1", "2", "3"]} />
           <Select dark label="Status" value={form.status} onChange={(value) => updateForm("status", value)} options={["In Service", "Out of Service"]} />
-          <Field dark label="Weather Conditions" value="72F  Partly Cloudy" onChange={() => {}} />
           <Field dark className="lg:col-span-2" label="Notes" value={form.notes || ""} onChange={(value) => updateForm("notes", value)} />
         </div>
       </div>
