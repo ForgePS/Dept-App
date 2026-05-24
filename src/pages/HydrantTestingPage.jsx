@@ -86,6 +86,13 @@ const api = async (path, options) => {
   return data;
 };
 
+const fileToDataUrl = (file) => new Promise((resolve, reject) => {
+  const reader = new FileReader();
+  reader.onload = () => resolve(reader.result);
+  reader.onerror = () => reject(reader.error);
+  reader.readAsDataURL(file);
+});
+
 export default function HydrantTestingPage() {
   const fileRef = useRef(null);
   const [screen, setScreen] = useState("dashboard");
@@ -98,7 +105,7 @@ export default function HydrantTestingPage() {
   const [selectedHydrant, setSelectedHydrant] = useState(null);
   const [form, setForm] = useState({ ...emptyHydrant, tested_at: todayInput() });
   const [inspectionRows, setInspectionRows] = useState(() =>
-    checklistItems.map(([item, notes]) => ({ item, result: "Yes", notes, repair_needed: "No" })),
+    checklistItems.map(([item, notes]) => ({ item, result: "Yes", notes, repair_needed: "No", photo: "" })),
   );
   const [message, setMessage] = useState("");
 
@@ -158,6 +165,24 @@ export default function HydrantTestingPage() {
 
   const updateForm = (field, value) => {
     setForm((current) => ({ ...current, [field]: value }));
+  };
+
+  const handleHydrantIdInput = (value) => {
+    updateForm("hydrant_id", value);
+    setQuery(value);
+
+    const typed = value.trim().toLowerCase();
+    if (!typed) return;
+
+    const exactMatch = hydrants.find((hydrant) =>
+      String(hydrant.hydrant_id || "").toLowerCase() === typed ||
+      String(hydrant.location_id || "").toLowerCase() === typed
+    );
+
+    if (exactMatch) {
+      selectHydrant(exactMatch);
+      setQuery(value);
+    }
   };
 
   const updateInspectionRow = (index, patch) => {
@@ -302,6 +327,7 @@ export default function HydrantTestingPage() {
               saveHydrant={saveHydrant}
               saveTest={saveTest}
               screen={screen}
+              handleHydrantIdInput={handleHydrantIdInput}
               selectHydrant={selectHydrant}
               setDistrict={setDistrict}
               setQuery={setQuery}
@@ -331,6 +357,7 @@ function DashboardScreen(props) {
     saveHydrant,
     saveTest,
     screen,
+    handleHydrantIdInput,
     selectHydrant,
     setDistrict,
     setQuery,
@@ -431,7 +458,7 @@ function DashboardScreen(props) {
         <div className="grid gap-4">
           <Panel title={screen === "hydrants" ? "Hydrant Record" : "Hydrant Test"}>
             <div className="grid gap-4 p-5 lg:grid-cols-4">
-              <Field label="Hydrant ID" value={form.hydrant_id} onChange={(value) => updateForm("hydrant_id", value)} />
+              <Field label="Hydrant ID" value={form.hydrant_id} onChange={handleHydrantIdInput} />
               <Select label="District" value={form.district} onChange={(value) => updateForm("district", value)} options={["1", "2", "3"]} />
               <Field className="lg:col-span-2" label="Address" value={form.location} onChange={(value) => updateForm("location", value)} />
               <Select label="Discharge Size" value={form.discharge_size} onChange={(value) => updateForm("discharge_size", value)} options={["2", "2.25", "2.5"]} />
@@ -467,6 +494,17 @@ function DashboardScreen(props) {
 }
 
 function InspectionScreen({ form, inspectionRows, updateForm, updateInspectionRow, saveInspection }) {
+  const handlePhotoUpload = async (index, file) => {
+    if (!file) return;
+    const photo = await fileToDataUrl(file);
+    updateInspectionRow(index, {
+      photo,
+      photo_name: file.name,
+      photo_type: file.type,
+      photo_size: file.size,
+    });
+  };
+
   return (
     <div className="bg-[#071019] p-5 text-white">
       <div className="mb-4 rounded-md border border-white/10 bg-white/5 p-4">
@@ -486,12 +524,12 @@ function InspectionScreen({ form, inspectionRows, updateForm, updateInspectionRo
           <h2 className="text-lg font-black uppercase">Hydrant Inspection Checklist</h2>
           <button type="button" className="text-sm font-bold">Expand All</button>
         </div>
-        <div className="hidden grid-cols-[1.8fr_90px_90px_90px_1.7fr_130px] gap-3 border-b border-white/10 bg-black/25 px-4 py-3 text-xs font-black uppercase text-white/80 xl:grid">
-          <span>Item</span><span>Yes</span><span>No</span><span>N/A</span><span>Notes / Details</span><span>Repair Needed</span>
+        <div className="hidden grid-cols-[1.55fr_80px_80px_80px_1.45fr_110px_120px] gap-3 border-b border-white/10 bg-black/25 px-4 py-3 text-xs font-black uppercase text-white/80 xl:grid">
+          <span>Item</span><span>Yes</span><span>No</span><span>N/A</span><span>Notes / Details</span><span>Photo</span><span>Repair Needed</span>
         </div>
         <div>
           {inspectionRows.map((row, index) => (
-            <div key={row.item} className="grid gap-3 border-b border-white/10 px-4 py-3 xl:grid-cols-[1.8fr_90px_90px_90px_1.7fr_130px] xl:items-center">
+            <div key={row.item} className="grid gap-3 border-b border-white/10 px-4 py-3 xl:grid-cols-[1.55fr_80px_80px_80px_1.45fr_110px_120px] xl:items-center">
               <p className="text-sm font-bold">{row.item}</p>
               {["Yes", "No", "N/A"].map((choice) => (
                 <button
@@ -504,6 +542,23 @@ function InspectionScreen({ form, inspectionRows, updateForm, updateInspectionRo
                 </button>
               ))}
               <input value={row.notes} onChange={(event) => updateInspectionRow(index, { notes: event.target.value })} className="dark-input" />
+              <label className="group relative grid min-h-11 cursor-pointer place-items-center overflow-hidden rounded-md border border-white/25 bg-black/20 text-white transition-colors hover:border-red-500 hover:bg-red-600/15">
+                {row.photo ? (
+                  <img src={row.photo} alt={`${row.item} inspection`} className="h-11 w-full object-cover" />
+                ) : (
+                  <span className="inline-flex items-center gap-2 text-xs font-black uppercase tracking-wide">
+                    <Camera className="h-4 w-4" />
+                    Photo
+                  </span>
+                )}
+                <input
+                  type="file"
+                  accept="image/*"
+                  capture="environment"
+                  className="sr-only"
+                  onChange={(event) => handlePhotoUpload(index, event.target.files?.[0]).catch(() => {})}
+                />
+              </label>
               <Select dark value={row.repair_needed} onChange={(value) => updateInspectionRow(index, { repair_needed: value })} options={["No", "Yes"]} />
             </div>
           ))}
