@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import L from "leaflet";
 import { Activity, CheckCircle2, ClipboardCheck, ClipboardList, Download, Droplets, Edit3, FileText, Gauge, Home, LocateFixed, Mail, MapPin, RefreshCcw, Save, Search, Settings, UploadCloud, Wrench } from "lucide-react";
-import hydrantSeed from "../data/hydrants/hydrants.json";
 
 const logoUrl = `${import.meta.env.BASE_URL}horn-lake-fire-logo.png`;
+const hydrantDataUrl = `${import.meta.env.BASE_URL}hydrants.json`;
 const crewUserOptions = [
   "", "Adam Tutor", "Billy White", "Blake Turnmire", "Brandon Jefferies", "Clay Willingham", "Cole Casey", "Cory Hill", "Gregory Scruggs", "Jay Mitchell", "Jay Wade", "Jeff Tidwell", "Jeremy Johnson", "Jeremy Powell", "John Paul Lavender", "Joseph Gardner", "Justin Correro", "Lee Chillis", "Mike Mallett", "Paul Destefanis", "Shane Headley", "Stephen White", "Steven Whitten", "Timothy Jones", "Troy Vest", "Tyler Lee", "William Sigurdson", "William Sisk"
 ];
@@ -136,8 +136,11 @@ function displayValue(value) {
   return String(value ?? "").trim() || "N/A";
 }
 
-function bundledHydrants() {
-  return Array.isArray(hydrantSeed?.hydrants) ? hydrantSeed.hydrants : [];
+async function staticHydrants() {
+  const res = await fetch(hydrantDataUrl);
+  if (!res.ok) throw new Error(`Static hydrants returned ${res.status}`);
+  const data = await res.json();
+  return Array.isArray(data?.hydrants) ? data.hydrants : [];
 }
 
 const detailFields = [
@@ -1047,9 +1050,13 @@ export default function HydrantTestingPage() {
       const res = await fetch("/api/hydrants");
       if (!res.ok) throw new Error(`Hydrant API returned ${res.status}`);
       const data = await res.json();
-      setHydrants(data.hydrants || bundledHydrants());
+      setHydrants(data.hydrants || []);
     } catch {
-      setHydrants(bundledHydrants());
+      try {
+        setHydrants(await staticHydrants());
+      } catch {
+        setHydrants([]);
+      }
     }
   }
   useEffect(() => { load(); }, []);
