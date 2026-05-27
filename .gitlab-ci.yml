@@ -5,6 +5,7 @@ pages:
   script:
     - npm ci
     - npm run build
+    - npm install firebase 
     - rm -rf public
     - cp -r dist public
   artifacts:
