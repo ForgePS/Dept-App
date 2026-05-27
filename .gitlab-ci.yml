@@ -1,3 +1,4 @@
+# The Docker image that will be used to build your app
 image: node:lts
 
 pages:
@@ -12,3 +13,4 @@ pages:
       - public
   rules:
     - if: $CI_COMMIT_REF_NAME == $CI_DEFAULT_BRANCH
+
