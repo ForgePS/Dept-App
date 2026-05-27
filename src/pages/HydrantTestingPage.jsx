@@ -1,7 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import L from "leaflet";
 import { Activity, CheckCircle2, ClipboardCheck, ClipboardList, Download, Droplets, Edit3, FileText, Gauge, Home, LocateFixed, Mail, MapPin, RefreshCcw, Save, Search, Settings, UploadCloud, Wrench } from "lucide-react";
+import hydrantSeed from "../data/hydrants/hydrants.json";
 
+const logoUrl = `${import.meta.env.BASE_URL}horn-lake-fire-logo.png`;
 const crewUserOptions = [
   "", "Adam Tutor", "Billy White", "Blake Turnmire", "Brandon Jefferies", "Clay Willingham", "Cole Casey", "Cory Hill", "Gregory Scruggs", "Jay Mitchell", "Jay Wade", "Jeff Tidwell", "Jeremy Johnson", "Jeremy Powell", "John Paul Lavender", "Joseph Gardner", "Justin Correro", "Lee Chillis", "Mike Mallett", "Paul Destefanis", "Shane Headley", "Stephen White", "Steven Whitten", "Timothy Jones", "Troy Vest", "Tyler Lee", "William Sigurdson", "William Sisk"
 ];
@@ -132,6 +134,10 @@ function districtMatches(h, district) {
 
 function displayValue(value) {
   return String(value ?? "").trim() || "N/A";
+}
+
+function bundledHydrants() {
+  return Array.isArray(hydrantSeed?.hydrants) ? hydrantSeed.hydrants : [];
 }
 
 const detailFields = [
@@ -970,20 +976,81 @@ function SyncImportPage() {
   );
 }
 
+function AppHome({ hydrants, setTab }) {
+  const due = hydrants.filter(isDueThisYear).length;
+  const tools = [
+    { label: "EMS", detail: "Forms, protocols, and EMS quick-reference material.", action: "EMS Tools", icon: Activity, tab: "reports", tone: "red" },
+    { label: "Fire", detail: "Forms, SOGs, fire resources, and department documents.", action: "Fire Tools", icon: Droplets, tab: "reports", tone: "dark" },
+    { label: "Inspection Division", detail: "Inspection forms, permits, and searchable fire-code resources.", action: "Inspect", icon: ClipboardCheck, tab: "inspection", tone: "red" },
+    { label: "Investigation Division", detail: "Investigation resources and case documentation.", action: "Review", icon: Search, tab: "reports", tone: "dark" },
+    { label: "Hydrant Testing", detail: `Hydrant records, flow testing, inspections, and CSV import/export. ${hydrants.length} records | ${due} due.`, action: "Open", icon: Droplets, tab: "dashboard", tone: "blue" },
+    { label: "Important Numbers", detail: "Contacts for dispatch, city support, vendors, and department resources.", action: "Call List", icon: Mail, tab: "reports", tone: "red" }
+  ];
+  function openTool(tool) {
+    if (tool.tab) setTab(tool.tab);
+  }
+  return (
+    <section className="command-home">
+      <div className="command-hero">
+        <img src={logoUrl} alt="Horn Lake Fire Department" />
+        <div className="command-hero-copy">
+          <span>Field-Ready Command Hub</span>
+          <h1>Horn Lake Fire/EMS</h1>
+          <p>Department forms, protocols, contacts, fire codes, and field resources.</p>
+          <div className="command-pills">
+            <div><CheckCircle2 size={18} /><strong>Ready</strong></div>
+            <div><Activity size={18} /><strong>Fast</strong></div>
+            <div><MapPin size={18} /><strong>Local</strong></div>
+          </div>
+        </div>
+      </div>
+      <div className="command-tools">
+        <div className="command-section-title">
+          <span>Choose A Section</span>
+          <strong>Department Tools</strong>
+          <em>iPad Optimized</em>
+        </div>
+        <div className="command-card-grid">
+          {tools.map((tool) => {
+            const Icon = tool.icon;
+            return (
+              <button key={tool.label} className={`command-card ${tool.tone}`} onClick={() => openTool(tool)}>
+                <span className="corner-fold" />
+                <span className="command-icon"><Icon size={30} /></span>
+                <div>
+                  <strong>{tool.label}</strong>
+                  <span>{tool.detail}</span>
+                  <em>{tool.action}</em>
+                </div>
+                <b>›</b>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+    </section>
+  );
+}
+
 export default function HydrantTestingPage() {
   const [hydrants, setHydrants] = useState([]);
   const [selected, setSelected] = useState(null);
   const [detailHydrant, setDetailHydrant] = useState(null);
   const [editorHydrant, setEditorHydrant] = useState(null);
-  const [tab, setTab] = useState("dashboard");
+  const [tab, setTab] = useState("app");
   const [theme, setTheme] = useState("dark");
   const [toast, setToast] = useState("");
   const [crew, setCrew] = useState(newBlankCrew);
   const [draftCrew, setDraftCrew] = useState(newBlankCrew);
   async function load() {
-    const res = await fetch("/api/hydrants");
-    const data = await res.json();
-    setHydrants(data.hydrants || []);
+    try {
+      const res = await fetch("/api/hydrants");
+      if (!res.ok) throw new Error(`Hydrant API returned ${res.status}`);
+      const data = await res.json();
+      setHydrants(data.hydrants || bundledHydrants());
+    } catch {
+      setHydrants(bundledHydrants());
+    }
   }
   useEffect(() => { load(); }, []);
   useEffect(() => {
@@ -1035,6 +1102,7 @@ export default function HydrantTestingPage() {
     setDetailHydrant(hydrant);
   }
   const tabTitle = {
+    app: "App",
     dashboard: "Dashboard",
     hydrants: "Hydrants",
     flow: "Flow Tests",
@@ -1044,11 +1112,12 @@ export default function HydrantTestingPage() {
     settings: "Settings"
   }[tab] || "Dashboard";
   return (
-    <main className={`app-shell ${theme === "light" ? "light-theme" : ""}`}>
+    <main className={`app-shell ${tab === "app" ? "home-shell" : ""} ${theme === "light" ? "light-theme" : ""}`}>
       <datalist id="tested-by-options">{crewUserOptions.map((name) => <option key={name} value={name} />)}</datalist>
       <aside className="side-nav">
-        <div className="brand-mark"><img src="/horn-lake-fire-logo.png" alt="Horn Lake Fire Department" /><strong>HYDRANT<br />TESTING</strong></div>
+        <div className="brand-mark"><img src={logoUrl} alt="Horn Lake Fire Department" /><strong>HYDRANT<br />TESTING</strong></div>
         <nav>
+          <button className={tab === "app" ? "active" : ""} onClick={() => setTab("app")}><Home size={16} /> App</button>
           <button className={tab === "dashboard" ? "active" : ""} onClick={() => setTab("dashboard")}><Home size={16} /> Dashboard</button>
           <button className={tab === "hydrants" ? "active" : ""} onClick={() => setTab("hydrants")}><Droplets size={16} /> Hydrants</button>
           <button className={tab === "flow" ? "active" : ""} onClick={() => setTab("flow")}><Gauge size={16} /> Flow Tests</button>
@@ -1062,6 +1131,7 @@ export default function HydrantTestingPage() {
       <section className="main-stage">
         <header className="topbar"><div><div><strong>{tabTitle}</strong><span>Horn Lake Fire Department</span></div></div><div className="topbar-actions"><span className="module-chip">Hydrant Testing</span><button onClick={load}><RefreshCcw size={16} /> Refresh</button></div></header>
         <nav className="ipad-tabs">
+          <button className={tab === "app" ? "active" : ""} onClick={() => setTab("app")}><Home size={16} /> App</button>
           <button className={tab === "dashboard" ? "active" : ""} onClick={() => setTab("dashboard")}><Home size={16} /> Dashboard</button>
           <button className={tab === "hydrants" ? "active" : ""} onClick={() => setTab("hydrants")}><Droplets size={16} /> Hydrants</button>
           <button className={tab === "flow" ? "active" : ""} onClick={() => setTab("flow")}><Gauge size={16} /> Flow</button>
@@ -1071,7 +1141,7 @@ export default function HydrantTestingPage() {
           <button className={tab === "settings" ? "active" : ""} onClick={() => setTab("settings")}><Settings size={16} /> Settings</button>
         </nav>
         {toast && <div className="toast"><CheckCircle2 size={16} /> {toast}</div>}
-        <section className="page-body">{tab === "dashboard" && <Dashboard hydrants={hydrants} selected={selected} onSelect={chooseHydrant} crew={crew} draftCrew={draftCrew} setDraftCrew={setDraftCrew} setCrewSession={setCrewSession} clearCrewSession={clearCrewSession} />}{tab === "hydrants" && <HydrantsPage hydrants={hydrants} selected={selected} onSelect={chooseHydrant} />}{tab === "inspection" && <Inspection selected={selected} crew={crew} onSaved={saved} />}{tab === "flow" && <FlowTest selected={selected} crew={crew} onSaved={saved} />}{tab === "reports" && <Reports crew={crew} />}{tab === "sync" && <SyncImportPage />}{tab === "settings" && <SettingsPage theme={theme} setTheme={setTheme} />}</section>
+        <section className="page-body">{tab === "app" && <AppHome hydrants={hydrants} setTab={setTab} />}{tab === "dashboard" && <Dashboard hydrants={hydrants} selected={selected} onSelect={chooseHydrant} crew={crew} draftCrew={draftCrew} setDraftCrew={setDraftCrew} setCrewSession={setCrewSession} clearCrewSession={clearCrewSession} />}{tab === "hydrants" && <HydrantsPage hydrants={hydrants} selected={selected} onSelect={chooseHydrant} />}{tab === "inspection" && <Inspection selected={selected} crew={crew} onSaved={saved} />}{tab === "flow" && <FlowTest selected={selected} crew={crew} onSaved={saved} />}{tab === "reports" && <Reports crew={crew} />}{tab === "sync" && <SyncImportPage />}{tab === "settings" && <SettingsPage theme={theme} setTheme={setTheme} />}</section>
       </section>
       {detailHydrant && <HydrantInfoModal hydrant={detailHydrant} onClose={() => setDetailHydrant(null)} onEdit={() => { setEditorHydrant(detailHydrant); setDetailHydrant(null); }} />}
       {editorHydrant && <HydrantEditorModal hydrant={editorHydrant} crew={crew} onClose={() => setEditorHydrant(null)} onSaved={saved} />}
