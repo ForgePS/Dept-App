@@ -1118,8 +1118,17 @@ export default function HydrantTestingPage() {
     sync: "Sync / Import",
     settings: "Settings"
   }[tab] || "Dashboard";
+  if (tab === "app") {
+    return (
+      <main className={`command-app-root ${theme === "light" ? "light-theme" : ""}`}>
+        <datalist id="tested-by-options">{crewUserOptions.map((name) => <option key={name} value={name} />)}</datalist>
+        {toast && <div className="toast"><CheckCircle2 size={16} /> {toast}</div>}
+        <AppHome hydrants={hydrants} setTab={setTab} />
+      </main>
+    );
+  }
   return (
-    <main className={`app-shell ${tab === "app" ? "home-shell" : ""} ${theme === "light" ? "light-theme" : ""}`}>
+    <main className={`app-shell ${theme === "light" ? "light-theme" : ""}`}>
       <datalist id="tested-by-options">{crewUserOptions.map((name) => <option key={name} value={name} />)}</datalist>
       <aside className="side-nav">
         <div className="brand-mark"><img src={logoUrl} alt="Horn Lake Fire Department" /><strong>HYDRANT<br />TESTING</strong></div>
@@ -1148,7 +1157,7 @@ export default function HydrantTestingPage() {
           <button className={tab === "settings" ? "active" : ""} onClick={() => setTab("settings")}><Settings size={16} /> Settings</button>
         </nav>
         {toast && <div className="toast"><CheckCircle2 size={16} /> {toast}</div>}
-        <section className="page-body">{tab === "app" && <AppHome hydrants={hydrants} setTab={setTab} />}{tab === "dashboard" && <Dashboard hydrants={hydrants} selected={selected} onSelect={chooseHydrant} crew={crew} draftCrew={draftCrew} setDraftCrew={setDraftCrew} setCrewSession={setCrewSession} clearCrewSession={clearCrewSession} />}{tab === "hydrants" && <HydrantsPage hydrants={hydrants} selected={selected} onSelect={chooseHydrant} />}{tab === "inspection" && <Inspection selected={selected} crew={crew} onSaved={saved} />}{tab === "flow" && <FlowTest selected={selected} crew={crew} onSaved={saved} />}{tab === "reports" && <Reports crew={crew} />}{tab === "sync" && <SyncImportPage />}{tab === "settings" && <SettingsPage theme={theme} setTheme={setTheme} />}</section>
+        <section className="page-body">{tab === "dashboard" && <Dashboard hydrants={hydrants} selected={selected} onSelect={chooseHydrant} crew={crew} draftCrew={draftCrew} setDraftCrew={setDraftCrew} setCrewSession={setCrewSession} clearCrewSession={clearCrewSession} />}{tab === "hydrants" && <HydrantsPage hydrants={hydrants} selected={selected} onSelect={chooseHydrant} />}{tab === "inspection" && <Inspection selected={selected} crew={crew} onSaved={saved} />}{tab === "flow" && <FlowTest selected={selected} crew={crew} onSaved={saved} />}{tab === "reports" && <Reports crew={crew} />}{tab === "sync" && <SyncImportPage />}{tab === "settings" && <SettingsPage theme={theme} setTheme={setTheme} />}</section>
       </section>
       {detailHydrant && <HydrantInfoModal hydrant={detailHydrant} onClose={() => setDetailHydrant(null)} onEdit={() => { setEditorHydrant(detailHydrant); setDetailHydrant(null); }} />}
       {editorHydrant && <HydrantEditorModal hydrant={editorHydrant} crew={crew} onClose={() => setEditorHydrant(null)} onSaved={saved} />}

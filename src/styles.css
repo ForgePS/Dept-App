@@ -486,10 +486,11 @@ textarea::placeholder {
 }
 
 .module-page { min-height: calc(100vh - 72px); display: grid; gap: 14px; align-content: start; }
+.command-app-root { width: 100%; min-height: 100vh; overflow-x: hidden; background: #252a2f; color: #fff; }
 .command-home { min-height: 100vh; color: #fff; background: #252a2f; background-image: linear-gradient(rgba(255,255,255,.045) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.045) 1px, transparent 1px); background-size: 40px 40px; }
 .command-hero { min-height: 312px; display: grid; grid-template-columns: 190px minmax(0, 1fr); align-items: center; gap: 30px; padding: 36px max(32px, 12vw); background: radial-gradient(circle at 12% 22%, rgba(201,31,37,.34), transparent 34%), linear-gradient(90deg, #3b0717 0%, #070d1b 48%, #040917 100%); border-bottom: 1px solid #3b4653; }
 .command-hero img,
-.command-logo { width: 168px; max-width: 100%; height: auto; object-fit: contain; filter: drop-shadow(0 18px 28px rgba(0,0,0,.32)); }
+.command-logo { display: block; width: 168px; max-width: 100%; height: auto; object-fit: contain; filter: drop-shadow(0 18px 28px rgba(0,0,0,.32)); }
 .command-hero-copy span { display: block; color: #ff9da1; font-size: 13px; font-weight: 900; letter-spacing: 6px; text-transform: uppercase; }
 .command-hero-copy h1 { margin: 8px 0 4px; color: #fff; font-size: clamp(46px, 6vw, 78px); line-height: .92; text-transform: uppercase; letter-spacing: 2px; }
 .command-hero-copy p { margin: 0; font-size: 18px; font-weight: 800; color: #fff; }
@@ -497,12 +498,13 @@ textarea::placeholder {
 .command-pills div { min-height: 70px; display: grid; align-content: center; gap: 8px; padding: 12px; border: 1px solid rgba(255,255,255,.16); border-radius: 14px; background: rgba(255,255,255,.1); box-shadow: inset 0 1px 0 rgba(255,255,255,.06); }
 .command-pills svg { color: #ff9da1; }
 .command-pills strong { color: #e5e7eb; font-size: 13px; text-transform: uppercase; }
-.command-tools { max-width: 1110px; margin: 0 auto; padding: 32px 22px 56px; }
+.command-tools { width: min(1110px, calc(100% - 44px)); margin: 0 auto; padding: 32px 0 56px; }
 .command-section-title { position: relative; display: grid; gap: 3px; margin-bottom: 20px; }
 .command-section-title span { color: #ef2a31; font-size: 13px; font-weight: 900; letter-spacing: 5px; text-transform: uppercase; }
 .command-section-title strong { color: #07111c; font-size: 25px; line-height: 1; text-transform: uppercase; letter-spacing: 2px; }
 .command-section-title em { position: absolute; right: 0; top: 4px; min-height: 34px; display: inline-flex; align-items: center; padding: 0 18px; border-radius: 999px; background: #d8dde4; color: #475569; font-size: 13px; font-style: normal; font-weight: 900; text-transform: uppercase; box-shadow: inset 0 1px 0 rgba(255,255,255,.8); }
 .command-card-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+.command-app-root button.command-card,
 button.command-card,
 .command-card { appearance: none; position: relative; min-height: 206px; width: 100%; display: grid; grid-template-columns: 72px minmax(0, 1fr) 18px; align-items: center; gap: 14px; padding: 26px 26px 22px; border: 1px solid #cbd5e1; border-top: 4px solid #ef242b; border-radius: 14px; background: linear-gradient(145deg, #f6f8fb, #dbe1e8); color: #07111c; text-align: left; overflow: hidden; box-shadow: 0 9px 20px rgba(0,0,0,.22); }
 .command-card .corner-fold { position: absolute; top: 0; right: 0; width: 86px; height: 86px; background: linear-gradient(135deg, transparent 49%, rgba(148,163,184,.28) 50%); border-left: 1px solid rgba(148,163,184,.45); }
