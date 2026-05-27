@@ -1,16 +1,14 @@
-# The Docker image that will be used to build your app
-image: node.lts
+image: node:lts
 
 pages:
-    stage: deploy
-    script: 
-        - npm ci
-        - npm run build
-        - mkdir public
-        - cp -r dist/* public/ || cp -r build/* public/
-    artifacts: 
-        paths:
-          - public
+  stage: deploy
+  script:
+    - npm ci
+    - npm run build
+    - mkdir public
+    - cp -r dist/* public/ || cp -r build/* public/
+  artifacts:
+    paths:
+      - public
   rules:
     - if: $CI_COMMIT_REF_NAME == $CI_DEFAULT_BRANCH
- 
