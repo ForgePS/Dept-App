@@ -1,0 +1,9 @@
+{
+  "name": "Horn Lake Fire/EMS",
+  "short_name": "HLFD",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#07111c",
+  "theme_color": "#c91f25",
+  "icons": []
+}
