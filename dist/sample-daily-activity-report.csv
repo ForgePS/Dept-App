@@ -1,0 +1,6 @@
+type,date,time,hydrant_id,location_id,district,activity,flow_gpm,nfpa_class,discharge_size,pitot_psi,static_psi,residual_psi,status,completed_by,shift,notes
+Flow Test,2026-05-26,08:15,HL 1001,31467967,2,Annual flow test,1628,Class AA,2.5,29,82,61,In Service,Jeremy Johnson,A Shift,Calculated from pitot PSI and discharge size
+Inspection,2026-05-26,09:05,HL 1008,31467974,1,Hydrant inspection,,,,,,,In Service,Adam Tutor,A Shift,Caps present; no leaks; clear around hydrant
+Flow Test,2026-05-26,10:30,HL 1002P,31467968,2,Private hydrant review,,Private Hydrant,2.5,,,,Private Hydrant (Do Not Test),Billy White,A Shift,Private hydrant marked do not test
+Hydrant Edit,2026-05-26,11:10,HL 1044,31468010,3,Hydrant information update,,,,,,,In Service,Gregory Scruggs,A Shift,Updated provider and GPS location
+Inspection,2026-05-26,13:20,HL 1086,31468052,3,Hydrant inspection,,,,,,,Needs Repair,Stephen White,A Shift,Operating nut stiff; repair follow-up needed
