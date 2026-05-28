@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import L from "leaflet";
-import { Activity, CheckCircle2, ClipboardCheck, ClipboardList, Download, Droplets, Edit3, FileText, Gauge, Home, LocateFixed, Mail, MapPin, RefreshCcw, Save, Search, Settings, UploadCloud, Wrench } from "lucide-react";
+import { Activity, BookOpen, CheckCircle2, ClipboardCheck, ClipboardList, Download, Droplets, Edit3, ExternalLink, FileText, Flame, Gauge, Home, LocateFixed, Mail, MapPin, RefreshCcw, Save, Search, Settings, ShieldCheck, UploadCloud, Wrench } from "lucide-react";
 import logoUrl from "../assets/horn-lake-fire-logo.png";
 
 const hydrantDataUrl = `${import.meta.env.BASE_URL}hydrants.json`;
@@ -31,6 +31,25 @@ const flowStandards = [
   { code: "G", className: "Class A", colorName: "Green", gpm: "1000-1499 gpm", color: "#16a34a" },
   { code: "O", className: "Class B", colorName: "Orange", gpm: "500-999 gpm", color: "#f97316" },
   { code: "R", className: "Class C", colorName: "Red", gpm: "0-499 gpm", color: "#dc2626" }
+];
+const emsProtocols = [
+  { id: "100", title: "Universal Patient Care", type: "Core", summary: "Scene safety, PPE, primary assessment, vital signs, oxygen as indicated, transport decision, and complete documentation.", steps: ["Confirm scene safety and standard precautions.", "Assess airway, breathing, circulation, disability, and exposure.", "Treat immediate life threats and determine transport priority.", "Reassess after interventions and document changes."] },
+  { id: "200", title: "Cardiac Arrest", type: "Cardiac", summary: "High-quality CPR, early defibrillation, airway management, vascular access, medication timing, and post-ROSC care.", steps: ["Begin compressions immediately and minimize pauses.", "Apply monitor/defibrillator and follow shockable or non-shockable pathway.", "Manage airway without interrupting compressions.", "After ROSC, support oxygenation, perfusion, and rapid transport."] },
+  { id: "300", title: "Respiratory Distress", type: "Medical", summary: "Position of comfort, oxygenation, bronchodilator support when indicated, CPAP consideration, and frequent reassessment.", steps: ["Assess work of breathing, lung sounds, SpO2, and end-tidal CO2 when available.", "Provide oxygen or ventilatory assistance based on presentation.", "Use bronchodilator or CPAP per agency scope and medical direction.", "Prepare for deterioration and transport without delay."] },
+  { id: "400", title: "Trauma Assessment", type: "Trauma", summary: "Bleeding control, spinal motion restriction decision, rapid trauma survey, pain control, and destination selection.", steps: ["Control life-threatening hemorrhage first.", "Identify mechanism, injuries, and need for rapid transport.", "Immobilize only when indicated by protocol and clinical findings.", "Reassess circulation, neurologic status, and pain."] },
+  { id: "500", title: "Stroke / Neuro", type: "Medical", summary: "Last-known-well time, stroke scale, glucose check, airway protection, and stroke-center notification.", steps: ["Determine exact last-known-well time.", "Perform stroke scale and blood glucose assessment.", "Protect airway and avoid unnecessary scene delay.", "Notify receiving facility with stroke findings and timeline."] }
+];
+const fireSogs = [
+  { id: "sog-001", title: "Incident Command", category: "Operations", summary: "Establish command, confirm strategy, assign tactical groups, track accountability, and communicate benchmarks." },
+  { id: "sog-014", title: "Structure Fire Response", category: "Suppression", summary: "Initial size-up, water supply, attack mode, search, ventilation coordination, RIT, and overhaul priorities." },
+  { id: "sog-022", title: "Mayday / Firefighter Rescue", category: "Safety", summary: "Mayday declaration, radio discipline, RIT deployment, PAR checks, rescue group assignment, and medical branch coordination." },
+  { id: "sog-031", title: "Vehicle Extrication", category: "Rescue", summary: "Scene protection, stabilization, glass management, patient access, disentanglement, and coordinated EMS handoff." }
+];
+const fireCodeChapters = [
+  { chapter: "3", title: "General Requirements", sections: [{ id: "304", title: "Combustible Waste Material", detail: "Storage, accumulation, and housekeeping expectations for combustible waste." }, { id: "307", title: "Open Burning", detail: "Controls and approval considerations for open burning and recreational fires." }] },
+  { chapter: "5", title: "Fire Service Features", sections: [{ id: "503", title: "Fire Apparatus Access Roads", detail: "Access road width, clearance, marking, and obstruction considerations." }, { id: "507", title: "Fire Protection Water Supplies", detail: "Hydrant placement, water supply, and fire-flow coordination topics." }] },
+  { chapter: "9", title: "Fire Protection Systems", sections: [{ id: "901", title: "General", detail: "Installation, inspection, testing, and maintenance of protection systems." }, { id: "906", title: "Portable Fire Extinguishers", detail: "Placement, visibility, travel distance, and maintenance considerations." }] },
+  { chapter: "10", title: "Means of Egress", sections: [{ id: "1003", title: "General Means of Egress", detail: "Egress capacity, continuity, headroom, and obstruction requirements." }, { id: "1010", title: "Doors, Gates and Turnstiles", detail: "Door operation, locks, latches, panic hardware, and egress-side use." }] }
 ];
 
 function today() {
@@ -979,12 +998,193 @@ function SyncImportPage() {
   );
 }
 
+function openSecureWindow(path) {
+  const url = new URL(path, window.location.origin).toString();
+  const popup = window.open(url, "_blank", "noopener,noreferrer");
+  if (popup) popup.focus?.();
+}
+
+function EmsProtocolsPage() {
+  const protocolFromUrl = () => new URLSearchParams(window.location.search).get("protocol") || emsProtocols[0].id;
+  const [selectedId, setSelectedId] = useState(protocolFromUrl);
+  const selectedProtocol = emsProtocols.find((item) => item.id === selectedId) || emsProtocols[0];
+
+  useEffect(() => {
+    setSelectedId(protocolFromUrl());
+  }, []);
+
+  function openProtocol(protocol) {
+    openSecureWindow(`/ems-forms/protocols?protocol=${encodeURIComponent(protocol.id)}`);
+  }
+
+  return (
+    <section className="module-page department-module">
+      <div className="module-card module-hero-card">
+        <div className="module-card-header">
+          <strong>EMS Forms & Protocols</strong>
+          <span>Quick-reference protocol cards and EMS form links.</span>
+        </div>
+        <div className="resource-layout">
+          <div className="resource-list">
+            {emsProtocols.map((protocol) => (
+              <button key={protocol.id} className={selectedProtocol.id === protocol.id ? "resource-row active" : "resource-row"} onClick={() => setSelectedId(protocol.id)}>
+                <BookOpen size={18} />
+                <span><strong>{protocol.id} - {protocol.title}</strong><em>{protocol.type}</em></span>
+              </button>
+            ))}
+          </div>
+          <article className="resource-detail">
+            <span className="resource-kicker">Protocol {selectedProtocol.id}</span>
+            <h2>{selectedProtocol.title}</h2>
+            <p>{selectedProtocol.summary}</p>
+            <div className="resource-steps">
+              {selectedProtocol.steps.map((step) => <div key={step}><CheckCircle2 size={16} /><span>{step}</span></div>)}
+            </div>
+            <div className="resource-actions">
+              <button className="primary" onClick={() => openProtocol(selectedProtocol)}><ExternalLink size={16} /> Open In New Window</button>
+            </div>
+          </article>
+        </div>
+      </div>
+      <div className="module-card">
+        <div className="module-card-header">
+          <strong>EMS Forms</strong>
+          <span>Common field-documentation reminders.</span>
+        </div>
+        <div className="resource-tile-grid">
+          {["Patient Refusal", "Run Narrative", "Medication Check", "Equipment Check"].map((item) => (
+            <div className="resource-tile" key={item}><Activity size={19} /><strong>{item}</strong><span>Open from agency-approved form storage when connected.</span></div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function FireFormsPage() {
+  const [selectedId, setSelectedId] = useState(() => new URLSearchParams(window.location.search).get("sog") || fireSogs[0].id);
+  const selectedSog = fireSogs.find((item) => item.id === selectedId) || fireSogs[0];
+
+  useEffect(() => {
+    const sog = new URLSearchParams(window.location.search).get("sog");
+    if (sog) setSelectedId(sog);
+  }, []);
+
+  function openSog(sog) {
+    openSecureWindow(`/fire-forms?sog=${encodeURIComponent(sog.id)}`);
+  }
+
+  return (
+    <section className="module-page department-module">
+      <div className="module-card">
+        <div className="module-card-header">
+          <strong>Fire Forms & SOGs</strong>
+          <span>Department operating guides and fire-resource forms.</span>
+        </div>
+        <div className="resource-layout">
+          <div className="resource-list">
+            {fireSogs.map((sog) => (
+              <button key={sog.id} className={selectedSog.id === sog.id ? "resource-row active" : "resource-row"} onClick={() => setSelectedId(sog.id)}>
+                <Flame size={18} />
+                <span><strong>{sog.title}</strong><em>{sog.category}</em></span>
+              </button>
+            ))}
+          </div>
+          <article className="resource-detail">
+            <span className="resource-kicker">{selectedSog.category}</span>
+            <h2>{selectedSog.title}</h2>
+            <p>{selectedSog.summary}</p>
+            <div className="resource-actions">
+              <button className="primary" onClick={() => openSog(selectedSog)}><ExternalLink size={16} /> Open SOG</button>
+            </div>
+          </article>
+        </div>
+      </div>
+      <div className="module-card">
+        <div className="module-card-header">
+          <strong>Fire Forms</strong>
+          <span>Operational forms used by crews and officers.</span>
+        </div>
+        <div className="resource-tile-grid">
+          {["Daily Apparatus Check", "Training Record", "Exposure Report", "Station Log"].map((item) => (
+            <div className="resource-tile" key={item}><FileText size={19} /><strong>{item}</strong><span>Ready for linking to the department's live form file.</span></div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function FireCodesPage() {
+  const params = new URLSearchParams(window.location.search);
+  const firstSection = fireCodeChapters[0].sections[0];
+  const [selected, setSelected] = useState(() => ({
+    chapter: params.get("chapter") || fireCodeChapters[0].chapter,
+    section: params.get("section") || firstSection.id
+  }));
+  const selectedChapter = fireCodeChapters.find((item) => item.chapter === selected.chapter) || fireCodeChapters[0];
+  const selectedSection = selectedChapter.sections.find((item) => item.id === selected.section) || selectedChapter.sections[0];
+
+  useEffect(() => {
+    const next = new URLSearchParams(window.location.search);
+    if (next.get("chapter") || next.get("section")) {
+      setSelected({ chapter: next.get("chapter") || fireCodeChapters[0].chapter, section: next.get("section") || firstSection.id });
+    }
+  }, []);
+
+  function openSection(chapter, section) {
+    openSecureWindow(`/fire-codes?chapter=${encodeURIComponent(chapter.chapter)}&section=${encodeURIComponent(section.id)}`);
+  }
+
+  return (
+    <section className="module-page department-module">
+      <div className="module-card">
+        <div className="module-card-header">
+          <strong>Fire Codes</strong>
+          <span>Searchable field reference for inspection and prevention work.</span>
+        </div>
+        <div className="code-browser">
+          <div className="code-chapters">
+            {fireCodeChapters.map((chapter) => (
+              <section key={chapter.chapter}>
+                <strong>Chapter {chapter.chapter}: {chapter.title}</strong>
+                {chapter.sections.map((section) => (
+                  <button key={section.id} className={selected.chapter === chapter.chapter && selected.section === section.id ? "code-section active" : "code-section"} onClick={() => setSelected({ chapter: chapter.chapter, section: section.id })}>
+                    <ShieldCheck size={16} />
+                    <span>{section.id} - {section.title}</span>
+                  </button>
+                ))}
+              </section>
+            ))}
+          </div>
+          <article className="resource-detail code-detail">
+            <span className="resource-kicker">Chapter {selectedChapter.chapter}</span>
+            <h2>{selectedSection.id} - {selectedSection.title}</h2>
+            <p>{selectedSection.detail}</p>
+            <div className="resource-actions">
+              <button className="primary" onClick={() => openSection(selectedChapter, selectedSection)}><ExternalLink size={16} /> Open Section</button>
+            </div>
+          </article>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function tabFromLocation() {
+  const path = window.location.pathname.toLowerCase();
+  if (path.startsWith("/ems-forms")) return "ems";
+  if (path.startsWith("/fire-forms")) return "fireForms";
+  if (path.startsWith("/fire-codes")) return "fireCodes";
+  return "app";
+}
+
 function AppHome({ hydrants, setTab }) {
   const due = hydrants.filter(isDueThisYear).length;
   const tools = [
-    { label: "EMS", detail: "Forms, protocols, and EMS quick-reference material.", action: "EMS Tools", icon: Activity, tab: "reports", tone: "red" },
-    { label: "Fire", detail: "Forms, SOGs, fire resources, and department documents.", action: "Fire Tools", icon: Droplets, tab: "reports", tone: "dark" },
-    { label: "Inspection Division", detail: "Inspection forms, permits, and searchable fire-code resources.", action: "Inspect", icon: ClipboardCheck, tab: "inspection", tone: "red" },
+    { label: "EMS", detail: "Forms, protocols, and EMS quick-reference material.", action: "EMS Tools", icon: Activity, tab: "ems", tone: "red" },
+    { label: "Fire Forms", detail: "Forms, SOGs, fire resources, and department documents.", action: "Fire Tools", icon: Flame, tab: "fireForms", tone: "dark" },
+    { label: "Fire Codes", detail: "Inspection references, code chapters, and field lookup resources.", action: "Codes", icon: ShieldCheck, tab: "fireCodes", tone: "red" },
     { label: "Investigation Division", detail: "Investigation resources and case documentation.", action: "Review", icon: Search, tab: "reports", tone: "dark" },
     { label: "Hydrant Testing", detail: `Hydrant records, flow testing, inspections, and CSV import/export. ${hydrants.length} records | ${due} due.`, action: "Open", icon: Droplets, tab: "dashboard", tone: "blue" },
     { label: "Important Numbers", detail: "Contacts for dispatch, city support, vendors, and department resources.", action: "Call List", icon: Mail, tab: "reports", tone: "red" }
@@ -1040,7 +1240,7 @@ export default function HydrantTestingPage() {
   const [selected, setSelected] = useState(null);
   const [detailHydrant, setDetailHydrant] = useState(null);
   const [editorHydrant, setEditorHydrant] = useState(null);
-  const [tab, setTab] = useState("app");
+  const [tab, setTab] = useState(tabFromLocation);
   const [theme, setTheme] = useState("dark");
   const [toast, setToast] = useState("");
   const [crew, setCrew] = useState(newBlankCrew);
@@ -1114,6 +1314,9 @@ export default function HydrantTestingPage() {
     hydrants: "Hydrants",
     flow: "Flow Tests",
     inspection: "Inspections",
+    ems: "EMS Protocols",
+    fireForms: "Fire Forms",
+    fireCodes: "Fire Codes",
     reports: "Reports",
     sync: "Sync / Import",
     settings: "Settings"
@@ -1138,6 +1341,9 @@ export default function HydrantTestingPage() {
           <button className={tab === "hydrants" ? "active" : ""} onClick={() => setTab("hydrants")}><Droplets size={16} /> Hydrants</button>
           <button className={tab === "flow" ? "active" : ""} onClick={() => setTab("flow")}><Gauge size={16} /> Flow Tests</button>
           <button className={tab === "inspection" ? "active" : ""} onClick={() => setTab("inspection")}><ClipboardCheck size={16} /> Inspections</button>
+          <button className={tab === "ems" ? "active" : ""} onClick={() => setTab("ems")}><Activity size={16} /> EMS</button>
+          <button className={tab === "fireForms" ? "active" : ""} onClick={() => setTab("fireForms")}><Flame size={16} /> Fire Forms</button>
+          <button className={tab === "fireCodes" ? "active" : ""} onClick={() => setTab("fireCodes")}><ShieldCheck size={16} /> Fire Codes</button>
           <button className={tab === "reports" ? "active" : ""} onClick={() => setTab("reports")}><FileText size={16} /> Reports</button>
           <button className={tab === "sync" ? "active" : ""} onClick={() => setTab("sync")}><UploadCloud size={16} /> Sync / Import</button>
           <button className={tab === "settings" ? "active" : ""} onClick={() => setTab("settings")}><Settings size={16} /> Settings</button>
@@ -1152,16 +1358,18 @@ export default function HydrantTestingPage() {
           <button className={tab === "hydrants" ? "active" : ""} onClick={() => setTab("hydrants")}><Droplets size={16} /> Hydrants</button>
           <button className={tab === "flow" ? "active" : ""} onClick={() => setTab("flow")}><Gauge size={16} /> Flow</button>
           <button className={tab === "inspection" ? "active" : ""} onClick={() => setTab("inspection")}><ClipboardCheck size={16} /> Inspections</button>
+          <button className={tab === "ems" ? "active" : ""} onClick={() => setTab("ems")}><Activity size={16} /> EMS</button>
+          <button className={tab === "fireForms" ? "active" : ""} onClick={() => setTab("fireForms")}><Flame size={16} /> Fire</button>
+          <button className={tab === "fireCodes" ? "active" : ""} onClick={() => setTab("fireCodes")}><ShieldCheck size={16} /> Codes</button>
           <button className={tab === "reports" ? "active" : ""} onClick={() => setTab("reports")}><FileText size={16} /> Reports</button>
           <button className={tab === "sync" ? "active" : ""} onClick={() => setTab("sync")}><UploadCloud size={16} /> Sync</button>
           <button className={tab === "settings" ? "active" : ""} onClick={() => setTab("settings")}><Settings size={16} /> Settings</button>
         </nav>
         {toast && <div className="toast"><CheckCircle2 size={16} /> {toast}</div>}
-        <section className="page-body">{tab === "dashboard" && <Dashboard hydrants={hydrants} selected={selected} onSelect={chooseHydrant} crew={crew} draftCrew={draftCrew} setDraftCrew={setDraftCrew} setCrewSession={setCrewSession} clearCrewSession={clearCrewSession} />}{tab === "hydrants" && <HydrantsPage hydrants={hydrants} selected={selected} onSelect={chooseHydrant} />}{tab === "inspection" && <Inspection selected={selected} crew={crew} onSaved={saved} />}{tab === "flow" && <FlowTest selected={selected} crew={crew} onSaved={saved} />}{tab === "reports" && <Reports crew={crew} />}{tab === "sync" && <SyncImportPage />}{tab === "settings" && <SettingsPage theme={theme} setTheme={setTheme} />}</section>
+        <section className="page-body">{tab === "dashboard" && <Dashboard hydrants={hydrants} selected={selected} onSelect={chooseHydrant} crew={crew} draftCrew={draftCrew} setDraftCrew={setDraftCrew} setCrewSession={setCrewSession} clearCrewSession={clearCrewSession} />}{tab === "hydrants" && <HydrantsPage hydrants={hydrants} selected={selected} onSelect={chooseHydrant} />}{tab === "inspection" && <Inspection selected={selected} crew={crew} onSaved={saved} />}{tab === "flow" && <FlowTest selected={selected} crew={crew} onSaved={saved} />}{tab === "ems" && <EmsProtocolsPage />}{tab === "fireForms" && <FireFormsPage />}{tab === "fireCodes" && <FireCodesPage />}{tab === "reports" && <Reports crew={crew} />}{tab === "sync" && <SyncImportPage />}{tab === "settings" && <SettingsPage theme={theme} setTheme={setTheme} />}</section>
       </section>
       {detailHydrant && <HydrantInfoModal hydrant={detailHydrant} onClose={() => setDetailHydrant(null)} onEdit={() => { setEditorHydrant(detailHydrant); setDetailHydrant(null); }} />}
       {editorHydrant && <HydrantEditorModal hydrant={editorHydrant} crew={crew} onClose={() => setEditorHydrant(null)} onSaved={saved} />}
     </main>
   );
 }
-
