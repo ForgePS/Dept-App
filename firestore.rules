@@ -1,0 +1,17 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // App reference datasets: EMS protocols, SOG indexes/details, fire code indexes, hose inventory.
+    match /appData/{document} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+
+    // Pre-fire plan metadata. Keep writes authenticated once department logins are enabled.
+    match /preFirePlans/{document} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+  }
+}

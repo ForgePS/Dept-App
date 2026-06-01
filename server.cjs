@@ -8,6 +8,7 @@ const DATA_DIR = path.join(__dirname, "src", "data");
 const HYDRANTS_FILE = path.join(DATA_DIR, "hydrants", "hydrants.json");
 const TESTS_FILE = path.join(DATA_DIR, "tests.json");
 const INSPECTIONS_FILE = path.join(DATA_DIR, "inspections.json");
+const PRE_FIRE_PLANS_FILE = path.join(DATA_DIR, "pre-fire-plans.json");
 
 app.use(express.json({ limit: "10mb" }));
 
@@ -77,7 +78,7 @@ function mergeHydrant(existing, patch) {
   return merged;
 }
 
-function markChecked(hydrants, locationId, hydrantId, checkedAt, checkedBy, shift, source) {
+function markChecked(hydrants, locationId, hydrantId, checkedAt, checkedBy, shift, source, patch = {}) {
   const idx = findHydrantIndex(hydrants, { location_id: locationId, hydrant_id: hydrantId });
   if (idx === -1) return null;
   const date = checkedAt || new Date().toISOString();
@@ -89,6 +90,7 @@ function markChecked(hydrants, locationId, hydrantId, checkedAt, checkedBy, shif
     checked_source: source,
     checked_by: checkedBy || hydrants[idx].checked_by || hydrants[idx].tested_by || "",
     checked_shift: shift || hydrants[idx].checked_shift || hydrants[idx].shift || "",
+    ...patch,
     updated_at: new Date().toISOString()
   };
   return hydrants[idx];
@@ -146,7 +148,17 @@ app.post("/api/tests", (req, res) => {
   tests.push(test);
   saveList(TESTS_FILE, "tests", tests);
   const wrapper = hydrantWrapper();
-  const hydrant = markChecked(wrapper.hydrants, test.location_id, test.hydrant_id, test.tested_at, test.tested_by, test.shift, "Flow Test");
+  const hydrant = markChecked(wrapper.hydrants, test.location_id, test.hydrant_id, test.tested_at, test.tested_by, test.shift, "Flow Test", {
+    flow_gpm: test.flow_gpm,
+    flow_result: test.flow_result,
+    nfpa_class: test.nfpa_class,
+    nfpa_color: test.nfpa_color,
+    discharge_size: test.discharge_size,
+    pitot_psi: test.pitot_psi,
+    static_psi: test.static_psi,
+    residual_psi: test.residual_psi,
+    status: test.status
+  });
   saveHydrants(wrapper.hydrants, { merge_summary: wrapper.merge_summary });
   res.json({ ok: true, test, hydrant });
 });
@@ -165,6 +177,31 @@ app.post("/api/inspections", (req, res) => {
   const hydrant = markChecked(wrapper.hydrants, inspection.location_id, inspection.hydrant_id, inspection.inspected_at, inspection.tested_by, inspection.shift, "Inspection");
   saveHydrants(wrapper.hydrants, { merge_summary: wrapper.merge_summary });
   res.json({ ok: true, inspection, hydrant });
+});
+
+app.get("/api/pre-fire-plans", (req, res) => {
+  const plans = readList(PRE_FIRE_PLANS_FILE, "plans");
+  const query = normalize(req.query.q || "");
+  const filtered = query
+    ? plans.filter((plan) => normalize(`${plan.address} ${plan.businessName} ${plan.occupancyType}`).includes(query))
+    : plans;
+  res.json({ ok: true, count: filtered.length, plans: filtered });
+});
+
+app.post("/api/pre-fire-plans", (req, res) => {
+  const plans = readList(PRE_FIRE_PLANS_FILE, "plans");
+  const body = req.body || {};
+  const plan = { ...body, id: body.id || Date.now().toString(), updated_at: new Date().toISOString() };
+  const next = [plan, ...plans.filter((item) => item.id !== plan.id)];
+  saveList(PRE_FIRE_PLANS_FILE, "plans", next);
+  res.json({ ok: true, plan, plans: next });
+});
+
+app.delete("/api/pre-fire-plans/:id", (req, res) => {
+  const plans = readList(PRE_FIRE_PLANS_FILE, "plans");
+  const next = plans.filter((plan) => plan.id !== req.params.id);
+  saveList(PRE_FIRE_PLANS_FILE, "plans", next);
+  res.json({ ok: true, count: next.length, plans: next });
 });
 
 app.get("/api/hydrants/export", (req, res) => {
