@@ -5,6 +5,7 @@ import { CircleMarker, MapContainer, Popup, TileLayer, useMap } from "react-leaf
 import "leaflet/dist/leaflet.css";
 import {
   ArrowLeft,
+  BarChart3,
   CalendarDays,
   Camera,
   Check,
@@ -31,7 +32,7 @@ const navItems = [
   { key: "hydrants", label: "Hydrants", icon: Droplets },
   { key: "flow", label: "Flow Tests", icon: Gauge },
   { key: "inspection", label: "Inspections", icon: ClipboardList },
-  { key: "reports", label: "Reports", icon: FileText },
+  { key: "reports", label: "Analytics", icon: BarChart3 },
   { key: "sync", label: "Sync / Import", icon: RefreshCw },
   { key: "settings", label: "Settings", icon: Settings },
 ];
@@ -125,6 +126,28 @@ const getHydrantStyle = (hydrant = {}) => {
   const flowValue = Number(hydrant?.flow_gpm || 0);
   if (!Number.isFinite(flowValue) || flowValue <= 0) return { label: "Not Tested", range: "No flow result", min: 0, color: "#64748b", text: "Gray" };
   return getNfpaClass(flowValue);
+};
+
+const getScreenTitle = (screen) => {
+  if (screen === "inspection") return "Hydrant Inspection";
+  if (screen === "reports") return "Analytics";
+  if (screen === "flow") return "Flow Tests";
+  if (screen === "dashboard") return "Dashboard";
+  if (screen === "sync") return "Sync / Import";
+  if (screen === "settings") return "Settings";
+  return "Hydrants";
+};
+
+const percent = (value, total) => {
+  if (!total) return "0%";
+  return `${Math.round((value / total) * 100)}%`;
+};
+
+const formatShortDate = (value) => {
+  if (!value) return "No date";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return String(value).slice(0, 10);
+  return date.toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
 };
 
 const getHydrantPosition = (hydrant) => {
@@ -366,7 +389,7 @@ export default function HydrantTestingPage() {
                 <ArrowLeft className="h-5 w-5" />
               </Link>
               <div className="min-w-0">
-                <h1 className="truncate text-2xl font-black tracking-tight">{screen === "inspection" ? "Hydrant Inspection" : "Hydrants"}</h1>
+                <h1 className="truncate text-2xl font-black tracking-tight">{getScreenTitle(screen)}</h1>
                 <p className="truncate text-sm font-medium text-white/85">
                   {selectedId ? `${selectedId} - ${form.location || "No location"} - District ${form.district || "-"}` : "Horn Lake Fire Department"}
                 </p>
@@ -460,15 +483,12 @@ function DashboardScreen(props) {
 
   if (screen === "reports") {
     return (
-      <div className="p-5">
-        <Panel title="Reports" subtitle="Export hydrant, testing, and inspection activity.">
-          <div className="grid gap-4 p-5 sm:grid-cols-3">
-            <ReportCard label="Hydrants" value={hydrants.length} href="/api/hydrants/export" />
-            <ReportCard label="Flow Tests" value={tests.length} />
-            <ReportCard label="Inspections" value={inspections.length} />
-          </div>
-        </Panel>
-      </div>
+      <AnalyticsScreen
+        hydrants={hydrants}
+        inspections={inspections}
+        mappedHydrants={mappedHydrants}
+        tests={tests}
+      />
     );
   }
 
@@ -586,6 +606,146 @@ function DashboardScreen(props) {
         </div>
       </div>
     </div>
+  );
+}
+
+function AnalyticsScreen({ hydrants, inspections, mappedHydrants, tests }) {
+  const inService = hydrants.filter((hydrant) => hydrant.status !== "Out of Service").length;
+  const outService = hydrants.filter((hydrant) => hydrant.status === "Out of Service").length;
+  const testedHydrantIds = new Set(tests.map((test) => test.location_id || test.hydrant_id).filter(Boolean));
+  const inspectedHydrantIds = new Set(inspections.map((inspection) => inspection.location_id || inspection.hydrant_id).filter(Boolean));
+  const hydrantsWithFlow = hydrants.filter((hydrant) => Number(hydrant.flow_gpm) > 0);
+  const averageFlow = hydrantsWithFlow.length
+    ? Math.round(hydrantsWithFlow.reduce((sum, hydrant) => sum + Number(hydrant.flow_gpm || 0), 0) / hydrantsWithFlow.length)
+    : 0;
+  const needsRepair = inspections.reduce((total, inspection) => total + (inspection.checklist || []).filter((row) => row.repair_needed === "Yes").length, 0);
+  const lastTest = [...tests].sort((a, b) => new Date(b.tested_at || 0) - new Date(a.tested_at || 0))[0];
+  const lastInspection = [...inspections].sort((a, b) => new Date(b.inspected_at || 0) - new Date(a.inspected_at || 0))[0];
+  const districts = ["1", "2", "3"].map((district) => {
+    const rows = hydrants.filter((hydrant) => String(hydrant.district || "") === district);
+    const districtTests = tests.filter((test) => String(test.district || "") === district);
+    const districtInspections = inspections.filter((inspection) => String(inspection.district || "") === district);
+    return {
+      district,
+      hydrants: rows.length,
+      mapped: rows.filter((hydrant) => getHydrantPosition(hydrant)).length,
+      inService: rows.filter((hydrant) => hydrant.status !== "Out of Service").length,
+      outService: rows.filter((hydrant) => hydrant.status === "Out of Service").length,
+      tests: districtTests.length,
+      inspections: districtInspections.length,
+    };
+  });
+  const nfpaSummary = nfpaClasses.map((item) => ({
+    ...item,
+    count: hydrants.filter((hydrant) => getNfpaClass(hydrant.flow_gpm).label === item.label).length,
+  }));
+  const recentTests = tests.slice(0, 5);
+  const recentInspections = inspections.slice(0, 5);
+
+  return (
+    <div className="grid gap-5 p-5">
+      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+        <Metric icon={Droplets} label="Total Hydrants" value={hydrants.length} tone="red" />
+        <Metric icon={MapPin} label="Mapped Hydrants" value={mappedHydrants.length} tone="blue" />
+        <Metric icon={Gauge} label="Flow Tests" value={tests.length} tone="green" />
+        <Metric icon={ClipboardList} label="Inspections" value={inspections.length} tone="orange" />
+      </div>
+
+      <Panel title="Analytics" subtitle="Complete hydrant inventory, testing, inspection, and map coverage summary.">
+        <div className="grid gap-4 p-5 lg:grid-cols-3">
+          <ReportCard label="In Service" value={inService} detail={percent(inService, hydrants.length)} />
+          <ReportCard label="Out of Service" value={outService} detail={percent(outService, hydrants.length)} />
+          <ReportCard label="Average Flow" value={averageFlow} detail="GPM from recorded hydrant flow" />
+          <ReportCard label="Hydrants Tested" value={testedHydrantIds.size} detail={percent(testedHydrantIds.size, hydrants.length)} />
+          <ReportCard label="Hydrants Inspected" value={inspectedHydrantIds.size} detail={percent(inspectedHydrantIds.size, hydrants.length)} />
+          <ReportCard label="Repair Items" value={needsRepair} detail="Inspection checklist lines marked yes" />
+          <ReportCard label="Last Flow Test" value={lastTest ? (lastTest.hydrant_id || lastTest.location_id || "Recorded") : "None"} detail={formatShortDate(lastTest?.tested_at)} />
+          <ReportCard label="Last Inspection" value={lastInspection ? (lastInspection.hydrant_id || lastInspection.location_id || "Recorded") : "None"} detail={formatShortDate(lastInspection?.inspected_at)} />
+          <ReportCard label="Hydrant Export" value={hydrants.length} detail="Download CSV" href="/api/hydrants/export" />
+        </div>
+      </Panel>
+
+      <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_420px]">
+        <Panel title="District Breakdown">
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[680px] text-left text-sm">
+              <thead className="bg-slate-100 text-xs font-black uppercase text-slate-500">
+                <tr>
+                  <th className="px-4 py-3">District</th>
+                  <th className="px-4 py-3">Hydrants</th>
+                  <th className="px-4 py-3">Mapped</th>
+                  <th className="px-4 py-3">In Service</th>
+                  <th className="px-4 py-3">Out</th>
+                  <th className="px-4 py-3">Tests</th>
+                  <th className="px-4 py-3">Inspections</th>
+                </tr>
+              </thead>
+              <tbody>
+                {districts.map((row) => (
+                  <tr key={row.district} className="border-t border-slate-200 bg-white font-bold">
+                    <td className="px-4 py-3 text-red-700">District {row.district}</td>
+                    <td className="px-4 py-3">{row.hydrants.toLocaleString()}</td>
+                    <td className="px-4 py-3">{row.mapped.toLocaleString()}</td>
+                    <td className="px-4 py-3">{row.inService.toLocaleString()}</td>
+                    <td className="px-4 py-3">{row.outService.toLocaleString()}</td>
+                    <td className="px-4 py-3">{row.tests.toLocaleString()}</td>
+                    <td className="px-4 py-3">{row.inspections.toLocaleString()}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </Panel>
+
+        <Panel title="NFPA Flow Classes">
+          <div className="grid gap-3 p-4">
+            {nfpaSummary.map((item) => (
+              <div key={item.label} className="rounded-md border border-slate-200 bg-white p-3">
+                <div className="mb-2 flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-3">
+                    <span className="h-4 w-4 rounded-full" style={{ backgroundColor: item.color }} />
+                    <span className="font-black">{item.label}</span>
+                  </div>
+                  <span className="text-sm font-black">{item.count.toLocaleString()}</span>
+                </div>
+                <div className="h-2 overflow-hidden rounded-full bg-slate-100">
+                  <div className="h-full rounded-full" style={{ width: percent(item.count, hydrants.length), backgroundColor: item.color }} />
+                </div>
+                <p className="mt-2 text-xs font-bold text-slate-500">{item.range}</p>
+              </div>
+            ))}
+          </div>
+        </Panel>
+      </div>
+
+      <div className="grid gap-5 xl:grid-cols-2">
+        <RecentActivityPanel title="Recent Flow Tests" rows={recentTests} dateField="tested_at" emptyText="No flow tests saved yet." />
+        <RecentActivityPanel title="Recent Inspections" rows={recentInspections} dateField="inspected_at" emptyText="No inspections completed yet." />
+      </div>
+    </div>
+  );
+}
+
+function RecentActivityPanel({ dateField, emptyText, rows, title }) {
+  return (
+    <Panel title={title}>
+      <div className="divide-y divide-slate-200">
+        {rows.length ? rows.map((row) => (
+          <div key={row.id || `${row.hydrant_id}-${row[dateField]}`} className="grid gap-1 bg-white px-4 py-3">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <p className="font-black">{row.hydrant_id || row.location_id || "No hydrant ID"}</p>
+              <p className="text-xs font-black uppercase text-slate-500">{formatShortDate(row[dateField])}</p>
+            </div>
+            <p className="text-sm font-semibold text-slate-600">
+              District {row.district || "-"} - {row.status || "In Service"} - {row.tested_by || "No user"}
+            </p>
+            {row.flow_gpm ? <p className="text-sm font-black text-red-700">{Number(row.flow_gpm).toLocaleString()} GPM</p> : null}
+          </div>
+        )) : (
+          <div className="p-5 text-sm font-bold text-slate-500">{emptyText}</div>
+        )}
+      </div>
+    </Panel>
   );
 }
 
@@ -1116,11 +1276,15 @@ function ActionButton({ icon: Icon, label, onClick, variant = "solid" }) {
   );
 }
 
-function ReportCard({ label, value, href }) {
+function ReportCard({ detail, label, value, href }) {
+  const isNumeric = typeof value === "number";
   const content = (
     <div className="rounded-md border border-slate-200 p-5">
       <p className="text-sm font-black uppercase text-slate-500">{label}</p>
-      <p className="mt-2 text-3xl font-black">{Number(value || 0).toLocaleString()}</p>
+      <p className={`mt-2 font-black ${isNumeric ? "text-3xl" : "break-words text-2xl"}`}>
+        {isNumeric ? Number(value || 0).toLocaleString() : value}
+      </p>
+      {detail && <p className="mt-3 text-sm font-bold text-slate-500">{detail}</p>}
       {href && <p className="mt-4 text-sm font-black text-red-700">Download CSV</p>}
     </div>
   );
